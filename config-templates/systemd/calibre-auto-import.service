@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch ebooks-incoming and auto-import new books into the Calibre library
+
+[Service]
+ExecStart=%h/.local/bin/calibre-auto-import.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

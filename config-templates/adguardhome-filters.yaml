@@ -1,0 +1,30 @@
+# Blocklist filters section for /etc/adguardhome.yaml
+#
+# This is a fragment, not a complete config — AdGuard Home only writes its
+# real config file after the setup wizard is completed once through the
+# browser (see scripts/08-dns-adguard.sh and docs/services.md). Apply this
+# filters: block after that, with the service stopped.
+#
+# Five layered lists, chosen deliberately to avoid excessive redundant
+# overlap while covering ads/trackers/malware broadly:
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt
+    name: AdAway Default Blocklist
+    id: 2
+  - enabled: true
+    url: https://big.oisd.nl/
+    name: OISD Big
+    id: 3
+  - enabled: true
+    url: https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+    name: Steven Black Unified Hosts
+    id: 4
+  - enabled: true
+    url: https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&mimetype=plaintext&showintro=0
+    name: Peter Lowe's Ad and Tracking Server List
+    id: 5

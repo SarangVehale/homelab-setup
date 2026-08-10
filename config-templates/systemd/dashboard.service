@@ -1,0 +1,12 @@
+[Unit]
+Description=Static dashboard for self-hosted services
+
+[Service]
+WorkingDirectory=/srv/dashboard
+ExecStartPre=/usr/bin/tailscale wait
+ExecStart=/usr/bin/python3 -m http.server 9000 --bind 100.100.208.10
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
