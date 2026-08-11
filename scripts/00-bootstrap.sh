@@ -63,6 +63,10 @@ echo "enforcement layer, not the individual apps' own bind settings."
 ./scripts/06-firewall.sh
 
 echo
+confirm "Deploying the dashboard (scripts/10)."
+./scripts/10-dashboard.sh
+
+echo
 echo "############################################################"
 echo "# MANUAL STEP: qBittorrent first launch"
 echo "############################################################"

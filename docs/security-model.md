@@ -88,7 +88,7 @@ after.
   Tailscale-only exposure, but worth knowing if that AUR package is ever
   reintroduced.
 - DNS resolution for this machine itself flows through AdGuard Home
-  (`systemd-resolved`'s `DNS=` set to `192.168.1.101`), meaning if AdGuard
+  (`systemd-resolved`'s `DNS=` set to `<LAN_IP>`), meaning if AdGuard
   Home is ever down, this machine's own DNS resolution breaks too, not just
   other devices'. Accepted tradeoff for "the host benefits from ad-blocking
   too."

@@ -6,7 +6,13 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LAN_IP="${LAN_IP:-192.168.1.101}"
+LAN_IP="${LAN_IP:-$(ip -4 addr show scope global | awk '/inet/ {print $2}' | cut -d/ -f1 | head -1)}"
+if [ -z "$LAN_IP" ]; then
+    echo "ERROR: couldn't auto-detect your LAN IP."
+    echo "       Set it explicitly: LAN_IP=192.168.x.x ./scripts/08-dns-adguard.sh"
+    exit 1
+fi
+echo "==> Using LAN IP: $LAN_IP"
 
 echo "==> Checking for the systemd-resolved port 53 conflict"
 if grep -q "^hosts:.*resolve" /etc/nsswitch.conf; then

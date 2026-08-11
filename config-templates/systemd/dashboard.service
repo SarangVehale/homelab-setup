@@ -4,7 +4,7 @@ Description=Static dashboard for self-hosted services
 [Service]
 WorkingDirectory=/srv/dashboard
 ExecStartPre=/usr/bin/tailscale wait
-ExecStart=/usr/bin/python3 -m http.server 9000 --bind 100.100.208.10
+ExecStart=/usr/bin/python3 -m http.server 9000 --bind __TAILSCALE_IP__
 Restart=always
 RestartSec=5
 

@@ -1,0 +1,4 @@
+title: Home media/self-hosting setup
+description: Documentation and setup scripts for a personal media/self-hosting stack — built to be reproducible on new hardware.
+theme: jekyll-theme-slate
+markdown: kramdown

@@ -42,7 +42,7 @@ doesn't re-litigate them:
    dir.** Service accounts (jellyfin, audiobookshelf, calibre-web) need to
    reach specific folders under `~/Media` without the home directory itself
    (`700`, dotfiles, SSH keys) becoming reachable. Solved with POSIX ACLs:
-   each service user gets bare traverse (`--x`) on `/home/sarang` itself,
+   each service user gets bare traverse (`--x`) on `~` itself,
    and scoped read (or read-write, for Calibre-Web specifically) on just its
    own subfolder. See `storage-and-permissions.md`.
 
@@ -58,31 +58,31 @@ doesn't re-litigate them:
 ## Network topology
 
 ```
-                         ┌─────────────────────────┐
-                         │   Tailscale tailnet      │
-                         │   100.64.0.0/10          │
-                         └───────────┬──────────────┘
-                                     │
-        ┌────────────────────────────────────────────────┐
-        │              sarang-hp (100.100.208.10)          │
-        │  ┌──────────────────────────────────────────┐   │
-        │  │ nftables: Tailscale-only enforcement       │   │
-        │  │  - Jellyfin :8096  (app binds 0.0.0.0,     │   │
-        │  │    firewall restricts)                     │   │
-        │  │  - AdGuard Home :80 admin (same pattern)    │   │
-        │  │  - AdGuard Home :53 DNS (LAN + Tailscale)   │   │
-        │  └──────────────────────────────────────────┘   │
-        │                                                   │
-        │  Audiobookshelf :3333 ─┐                          │
-        │  Calibre-Web    :8083  ├─ bind directly to        │
-        │  Dashboard      :9000  ┘  100.100.208.10          │
-        │                                                   │
-        │  qBittorrent WebUI :8080 ─ bind to 100.100.208.10 │
-        │  qBittorrent BT port :11718 ─ local only, no      │
-        │                                port forward        │
-        └───────────────────────────────────────────────────┘
-                                     │
-                         LAN 192.168.1.0/24
+                    ┌─────────────────────────────┐
+                    │   Tailscale tailnet          │
+                    │   100.64.0.0/10              │
+                    └───────────────┬───────────────┘
+                                    │
+        ┌───────────────────────────────────────────────────┐
+        │         this machine (Tailscale IP: <TAILSCALE_IP>)│
+        │  ┌─────────────────────────────────────────────┐  │
+        │  │ nftables: Tailscale-only enforcement          │  │
+        │  │  - Jellyfin :8096  (app binds 0.0.0.0,        │  │
+        │  │    firewall restricts)                        │  │
+        │  │  - AdGuard Home :80 admin (same pattern)      │  │
+        │  │  - AdGuard Home :53 DNS (LAN + Tailscale)     │  │
+        │  └─────────────────────────────────────────────┘  │
+        │                                                     │
+        │  Audiobookshelf :3333 ─┐                            │
+        │  Calibre-Web    :8083  ├─ bind directly to          │
+        │  Dashboard      :9000  ┘  <TAILSCALE_IP>            │
+        │                                                     │
+        │  qBittorrent WebUI :8080 ─ bind to <TAILSCALE_IP>   │
+        │  qBittorrent BT port :11718 ─ local only, no        │
+        │                                port forward         │
+        └─────────────────────────────────────────────────────┘
+                                    │
+                         LAN <LAN_SUBNET>
                     (only AdGuard Home DNS :53 reachable here)
 ```
 
@@ -112,13 +112,13 @@ script details.
 
 | Service | Runs as | Config location |
 |---|---|---|
-| qBittorrent | `sarang` (desktop app) | `~/.config/qBittorrent/` |
+| qBittorrent | `$USER` (desktop app) | `~/.config/qBittorrent/` |
 | Audiobookshelf | `audiobookshelf` (system user) | `/etc/audiobookshelf.env`, `/var/lib/audiobookshelf/` |
 | Calibre-Web | `calibre-web` (system user) | in `/opt/calibre-web/` itself (app.db) |
 | Jellyfin | `jellyfin` (system user) | `/var/lib/jellyfin/` |
 | AdGuard Home | `adguardhome` (system user) | `/etc/adguardhome.yaml` |
-| Dashboard | `sarang` (systemd --user) | `/srv/dashboard/` |
-| Ebook watcher | `sarang` (systemd --user) | `~/.local/bin/calibre-auto-import.sh` |
+| Dashboard | `$USER` (systemd --user) | `/srv/dashboard/` |
+| Ebook watcher | `$USER` (systemd --user) | `~/.local/bin/calibre-auto-import.sh` |
 
 All the system-user services were installed via native packages (Jellyfin,
 AdGuard Home) or custom systemd units (Audiobookshelf, Calibre-Web) that

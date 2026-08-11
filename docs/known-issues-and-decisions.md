@@ -132,7 +132,7 @@ for the IP to actually be assigned before trying to bind to it. This is
 
 ### AdGuard Home's `dns.bind_hosts` config doesn't restrict its actual listener
 
-Set explicitly to `[192.168.1.101, 100.100.208.10]` in
+Set explicitly to `[<LAN_IP>, <TAILSCALE_IP>]` in
 `/etc/adguardhome.yaml`, confirmed correct in the file — but the running
 process logs `creating udp server socket addr=0.0.0.0:53` regardless.
 Same category of issue as Jellyfin's `LocalNetworkAddresses` (see

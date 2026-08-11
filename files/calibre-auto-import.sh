@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INCOMING="/home/sarang/Media/ebooks-inbox"
-LIBRARY="/home/sarang/Media/ebooks"
+INCOMING="$HOME/Media/ebooks-inbox"
+LIBRARY="$HOME/Media/ebooks"
 
 inotifywait -m -r -e close_write -e moved_to --format '%w%f' "$INCOMING" |
 while read -r file; do

@@ -1,14 +1,14 @@
 {
     "mam-audio": {
-        "save_path": "/home/sarang/Media/audiobooks"
+        "save_path": "__HOME__/Media/audiobooks"
     },
     "mam-ebook": {
-        "save_path": "/home/sarang/Media/ebooks-inbox"
+        "save_path": "__HOME__/Media/ebooks-inbox"
     },
     "mam-video": {
-        "save_path": "/home/sarang/Media/movies"
+        "save_path": "__HOME__/Media/movies"
     },
     "mam-tv": {
-        "save_path": "/home/sarang/Media/tv"
+        "save_path": "__HOME__/Media/tv"
     }
 }

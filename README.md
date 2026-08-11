@@ -1,7 +1,7 @@
 # Home media/self-hosting setup
 
 This repo documents and scripts the personal media/self-hosting stack running on
-`sarang-hp` (Arch Linux, Intel Haswell laptop). Built up incrementally; this repo
+`media-server` (Arch Linux, Intel Haswell laptop). Built up incrementally; this repo
 exists so the whole thing can be **reproduced on new hardware** without
 re-deriving every decision from scratch.
 

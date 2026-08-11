@@ -12,7 +12,7 @@ WorkingDirectory=/opt/audiobookshelf
 ExecStart=/usr/bin/node /opt/audiobookshelf/index.js
 Restart=always
 Environment=NODE_ENV=production
-Environment=HOST=100.100.208.10
+Environment=HOST=__TAILSCALE_IP__
 Environment=PORT=3333
 Environment=CONFIG_PATH=/var/lib/audiobookshelf/config
 Environment=METADATA_PATH=/var/lib/audiobookshelf/metadata

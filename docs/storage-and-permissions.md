@@ -10,7 +10,7 @@ Media storage went through two iterations:
    everything under the home directory where it's naturally browsable, not
    tucked away in `/srv`.
 
-The move required solving a real problem: `/home/sarang` is `700` (locked to
+The move required solving a real problem: `~` is `700` (locked to
 the owner only), and moving service data under it would normally mean either
 loosening that (bad — exposes dotfiles, SSH keys, everything else in the home
 directory) or the service accounts simply can't reach it.
@@ -18,21 +18,21 @@ directory) or the service accounts simply can't reach it.
 **Solution: POSIX ACLs, scoped precisely.**
 
 ```
-setfacl -m u:jellyfin:--x /home/sarang              # traverse-only, nothing else
+setfacl -m u:jellyfin:--x ~              # traverse-only, nothing else
 setfacl -R -m u:jellyfin:r-X ~/Media/movies          # read-only, this subfolder only
 setfacl -R -d -m u:jellyfin:r-X ~/Media/movies       # same, applies to future files too
 ```
 
 The `--x` grant on the home directory itself is the key trick: it lets the
-service account *pass through* `/home/sarang` to reach a specific known
+service account *pass through* `~` to reach a specific known
 subpath, without being able to list or read anything else in the directory.
-`ls -la /home/sarang` from the `jellyfin` account would show nothing;
-`cat /home/sarang/Media/movies/whatever.mkv` works fine.
+`ls -la ~` from the `jellyfin` account would show nothing;
+`cat ~/Media/movies/whatever.mkv` works fine.
 
 Verify this is still true after any change with:
 
 ```
-getfacl /home/sarang
+getfacl ~
 ```
 
 You want to see `group::---` (the real, unaffected traditional group
@@ -59,11 +59,11 @@ output before concluding anything changed.
 
 | Path | Grantee | Permission | Why |
 |---|---|---|---|
-| `/home/sarang` | `jellyfin`, `audiobookshelf`, `calibre-web` | `--x` (traverse only) | pass-through, nothing else |
+| `~` | `jellyfin`, `audiobookshelf`, `calibre-web` | `--x` (traverse only) | pass-through, nothing else |
 | `~/Media/movies`, `~/Media/tv` | `jellyfin` | `r-X` (read-only) | scans/streams, never writes to source |
 | `~/Media/audiobooks` | `audiobookshelf` | `r-X` (read-only) | same |
 | `~/Media/ebooks` | `calibre-web` | `rwX` (read-write) | actively manages the library — edits metadata, converts formats, deletes |
-| `~/Media/ebooks-inbox` | *(none needed)* | — | only `sarang` (qBittorrent, the watcher) ever touches this |
+| `~/Media/ebooks-inbox` | *(none needed)* | — | only `$USER` (qBittorrent, the watcher) ever touches this |
 
 Note Calibre-Web is the only one with write access — it's the only app that
 actively modifies its library contents (metadata edits, format conversion)

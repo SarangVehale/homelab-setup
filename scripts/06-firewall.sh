@@ -3,27 +3,31 @@
 # (the real control layer - don't trust individual apps' own bind-address
 # settings, see docs/security-model.md).
 #
-# IMPORTANT: edit config-templates/nftables.conf first if the LAN subnet on
-# new hardware isn't 192.168.1.0/24 - check with: ip route | grep default
+# Auto-detects your LAN subnet from the default route and substitutes it
+# into the template. Override with LAN_SUBNET=x.x.x.x/24 if auto-detection
+# picks the wrong interface (e.g. multiple NICs).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-CURRENT_SUBNET=$(ip route | awk '/^default/ {print $3}' | sed -E 's/[0-9]+$/0/')
-if [ -n "$CURRENT_SUBNET" ] && ! grep -q "$CURRENT_SUBNET" "$REPO_ROOT/config-templates/nftables.conf"; then
-    echo "WARNING: detected LAN gateway subnet ($CURRENT_SUBNET/24) does not match"
-    echo "         what's hardcoded in config-templates/nftables.conf (192.168.1.0/24)."
-    echo "         Edit that file's LAN subnet references before continuing, or"
-    echo "         AdGuard Home's DNS port won't be reachable from your actual LAN."
-    read -p "Continue anyway? [y/N] " -n 1 -r; echo
-    [[ $REPLY =~ ^[Yy]$ ]] || exit 1
+if [ -z "${LAN_SUBNET:-}" ]; then
+    GATEWAY=$(ip route | awk '/^default/ {print $3; exit}')
+    if [ -z "$GATEWAY" ]; then
+        echo "ERROR: couldn't auto-detect your LAN gateway. Set it explicitly:"
+        echo "       LAN_SUBNET=192.168.1.0/24 ./scripts/06-firewall.sh"
+        exit 1
+    fi
+    LAN_SUBNET="$(echo "$GATEWAY" | sed -E 's/[0-9]+$/0/')/24"
+    echo "==> Auto-detected LAN subnet: $LAN_SUBNET (from gateway $GATEWAY)"
+    echo "    If this is wrong (e.g. you have multiple network interfaces),"
+    echo "    re-run with: LAN_SUBNET=x.x.x.x/24 ./scripts/06-firewall.sh"
 fi
 
-echo "==> Installing nftables ruleset"
-sudo cp "$REPO_ROOT/config-templates/nftables.conf" /etc/nftables.conf
-sudo nft -f /etc/nftables.conf
+echo "==> Rendering nftables ruleset with LAN_SUBNET=$LAN_SUBNET"
+sed "s|__LAN_SUBNET__|$LAN_SUBNET|g" "$REPO_ROOT/config-templates/nftables.conf" | sudo tee /etc/nftables.conf >/dev/null
 
-echo "==> Enabling nftables.service (loads the ruleset at boot)"
+echo "==> Loading and enabling nftables.service"
+sudo nft -f /etc/nftables.conf
 sudo systemctl enable --now nftables
 
 echo "==> Verifying the ruleset actually loaded (not just the service 'active')"

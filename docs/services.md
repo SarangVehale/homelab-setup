@@ -2,7 +2,7 @@
 
 ## qBittorrent
 
-- Installed via pacman (`qbittorrent`), runs as `sarang` (desktop app, not a
+- Installed via pacman (`qbittorrent`), runs as `$USER` (desktop app, not a
   system service) — starts via `~/.config/autostart/qbittorrent.desktop`
   (XDG autostart, picked up by `dex` in this i3 config).
 - Private-tracker settings: **DHT, PEX, and LSD all disabled** — mandatory
@@ -35,7 +35,7 @@
   survived the package→source migration untouched, reused directly.
 - Library must be pointed at `~/Media/audiobooks` through its own web UI
   (Settings → Libraries) — **known past bug**: it was once misconfigured to
-  scan `/home/sarang` directly (the whole home dir), which just spammed
+  scan `~` directly (the whole home dir), which just spammed
   `EACCES` errors since the ACL only grants traverse there. If audiobooks
   aren't showing up, check this first.
 - Systemd service: `config-templates/systemd/audiobookshelf.service`.
@@ -77,7 +77,7 @@
 - Config: `/etc/adguardhome.yaml` — persistent config isn't written until
   the setup wizard is completed once through the browser (first launch is
   unconfigured, listens on `0.0.0.0:3000` for the wizard itself).
-- DNS (port 53) bound to `192.168.1.101` + `100.100.208.10` in config —
+- DNS (port 53) bound to `<LAN_IP>` + `<TAILSCALE_IP>` in config —
   **but this setting is not actually respected by the DNS listener in
   practice** (observed binding `0.0.0.0`/`[::]` regardless). The `nftables`
   rule is what actually restricts it. See `security-model.md`.
@@ -93,14 +93,14 @@
   port. `nss-resolve` in `/etc/nsswitch.conf` means most local programs
   don't even touch the stub port directly, so this is safe.
 - This machine's own DNS resolution is pointed at AdGuard Home too, via
-  `DNS=192.168.1.101` in `resolved.conf` — the host gets ad-blocking
+  `DNS=<LAN_IP>` in `resolved.conf` — the host gets ad-blocking
   benefits, not just other network devices.
 - **Router configuration required** (not scriptable — ISP-specific web UI):
-  point the router's DHCP-assigned DNS server at `192.168.1.101` for
+  point the router's DHCP-assigned DNS server at `<LAN_IP>` for
   network-wide coverage of non-Tailscale devices. Also register AdGuard
   Home as the tailnet's global nameserver
   (`login.tailscale.com/admin/dns` → Add Nameserver →
-  `100.100.208.10` → Override local DNS) for automatic coverage on every
+  `<TAILSCALE_IP>` → Override local DNS) for automatic coverage on every
   Tailscale-connected device with zero per-device config.
 
 ## Dashboard
@@ -128,5 +128,5 @@
 
 All system services are `enable`d (not just started); the two
 `systemd --user` services rely on `loginctl enable-linger sarang` being set
-(check with `loginctl show-user sarang -p Linger` — should say `yes`) so
+(check with `loginctl show-user $USER -p Linger` — should say `yes`) so
 they run even without an active login session.

@@ -12,7 +12,12 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QBT_CONF="$HOME/.config/qBittorrent/qBittorrent.conf"
 QBT_CATEGORIES="$HOME/.config/qBittorrent/categories.json"
-TAILSCALE_IP="${TAILSCALE_IP:-100.100.208.10}"
+TAILSCALE_IP="${TAILSCALE_IP:-$(tailscale ip -4 2>/dev/null)}"
+if [ -z "$TAILSCALE_IP" ]; then
+    echo "ERROR: couldn't auto-detect your Tailscale IP (is Tailscale up? 'tailscale ip -4')."
+    echo "       Set it explicitly: TAILSCALE_IP=100.x.x.x ./scripts/07-qbittorrent.sh"
+    exit 1
+fi
 
 if pgrep -x qbittorrent >/dev/null; then
     echo "ERROR: qBittorrent is running. Quit it fully first (tray -> Exit, not"
@@ -29,7 +34,7 @@ fi
 
 echo "==> Installing categories (routes downloads by type into ~/Media)"
 mkdir -p "$(dirname "$QBT_CATEGORIES")"
-cp "$REPO_ROOT/config-templates/qbittorrent-categories.json" "$QBT_CATEGORIES"
+sed "s|__HOME__|$HOME|g" "$REPO_ROOT/config-templates/qbittorrent-categories.json" > "$QBT_CATEGORIES"
 
 echo "==> Patching qBittorrent.conf"
 mkdir -p "$HOME/Media"/{movies,tv,audiobooks,ebooks-inbox,incomplete}
