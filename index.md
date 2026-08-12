@@ -9,7 +9,9 @@ qBittorrent, Audiobookshelf, Calibre-Web, Jellyfin, AdGuard Home, all behind
 Tailscale — built specifically to be **reproducible on new hardware** without
 re-deriving every decision from scratch.
 
-Full narrative overview: [README](README.md).
+Full narrative overview: [README](README.md). **Using an AI agent to rebuild
+this? Start with [AGENTS.md](AGENTS.md)** instead of the docs below — it's
+the operating manual, not a reference doc.
 
 ## Documentation
 
@@ -35,7 +37,7 @@ anywhere in this repo.
 | [`05-systemd-services.sh`](scripts/05-systemd-services.sh) | Service accounts, unit files, the `tailscale-online.target` boot-ordering fix |
 | [`06-firewall.sh`](scripts/06-firewall.sh) | `nftables` — the actual Tailscale-only enforcement layer |
 | [`07-qbittorrent.sh`](scripts/07-qbittorrent.sh) | Private-tracker settings, categories, WebUI binding |
-| [`08-dns-adguard.sh`](scripts/08-dns-adguard.sh) | `systemd-resolved` port-53 conflict fix, AdGuard Home wiring |
+| [`08-dns-adguard.sh`](scripts/08-dns-adguard.sh) | `systemd-resolved` port-53 conflict fix, AdGuard Home wiring (kept for reference — removed from the live deployment, see AGENTS.md) |
 | [`09-watcher.sh`](scripts/09-watcher.sh) | Ebook auto-import watcher |
 | [`10-dashboard.sh`](scripts/10-dashboard.sh) | Static links dashboard |
 

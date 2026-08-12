@@ -14,6 +14,12 @@ A hardware upgrade is expected in roughly 2-3 years. When that happens, this
 repo should let the whole stack be rebuilt on the new machine in an afternoon
 instead of a week.
 
+**Using an AI coding agent to do the rebuild?** Point it at
+[`AGENTS.md`](AGENTS.md) first — it's an operating manual for exactly that,
+covering what the agent should never do on its own (credentials, account
+creation), and the verification habits this repo was built the hard way to
+require.
+
 ## What's actually running
 
 | Service | Purpose | Reachable at | Install method |
