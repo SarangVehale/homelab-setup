@@ -1,0 +1,6 @@
+[Unit]
+Description=Recover media HDD after (re)connect: fsck, mount, restart dependent services
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/media-hdd-recover.sh

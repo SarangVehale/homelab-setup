@@ -89,6 +89,29 @@ fine and weren't. Don't repeat that. Specifically:
   dropping a real file into the watched folder and confirming an organized
   copy appeared in the library — not by trusting that the watcher service
   showed "active."
+- **Presence is not liveness.** `mountpoint -q` returns true for a *dead*
+  mount left behind by a disconnected drive. Both the auto-recovery script
+  and the health check here originally used exactly that test and both
+  reported "healthy" during a live outage. Any check for a resource being
+  available must actually touch it (`timeout 5 ls "$MP"`), not just confirm
+  an entry exists.
+- **A job that finishes impossibly fast has failed.** A video transcode
+  that "completed" in 30 seconds for a 2-hour film had actually errored out
+  on a truncated input and written a zero-byte file, and the surrounding
+  script happily continued. Check exit codes on every step of a pipeline,
+  and sanity-check output against a known property of the input (duration,
+  size, checksum) rather than just existence.
+- **When a setting you applied reverts, look for another daemon writing it**
+  before assuming your config is wrong. A udev rule here was silently
+  overridden by TLP's own USB power rules. Note also that `udevadm test` is
+  a **dry run** — it confirms your rule matches and would write a value,
+  and proves nothing about who writes last.
+- **Don't cry wolf.** Several times during this setup's construction, a
+  "problem" was announced before it was verified — a normal `Type=oneshot`
+  service showing `inactive (dead)` mistaken for a dead firewall, standard
+  file permissions mistaken for a missing ACL. Confirm a fault is real
+  before escalating it to the human, and say plainly when a previous
+  conclusion was wrong.
 
 ## Redaction discipline
 

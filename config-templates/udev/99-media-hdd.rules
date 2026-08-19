@@ -1,0 +1,7 @@
+# Disable USB autosuspend for this drive - the JMS583 bridge chip does not resume
+# cleanly from a suspended link state, causing a full disconnect/reconnect (new
+# device number) instead of a clean wake, roughly every couple minutes of idle.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="152d", ATTR{idProduct}=="0583", ATTR{power/control}="on"
+
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_UUID}=="__MEDIA_HDD_UUID__", TAG+="systemd", ENV{SYSTEMD_WANTS}="media-hdd-recover.service"
+ACTION=="remove", SUBSYSTEM=="usb", ENV{ID_SERIAL_SHORT}=="__MEDIA_HDD_USB_SERIAL__", TAG+="systemd", ENV{SYSTEMD_WANTS}="media-hdd-disconnect.service"

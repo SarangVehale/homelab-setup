@@ -1,0 +1,6 @@
+[Unit]
+Description=Generate dashboard stats.json
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/dashboard-stats.sh

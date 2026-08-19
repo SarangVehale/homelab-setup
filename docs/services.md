@@ -103,6 +103,35 @@
   `<TAILSCALE_IP>` → Override local DNS) for automatic coverage on every
   Tailscale-connected device with zero per-device config.
 
+
+## Immich (photos & video)
+
+- Self-hosted photo/video backup and timeline — the Google Photos
+  replacement. Reachable on port **2283**.
+- **The only Docker component in this stack.** Immich upstream explicitly
+  does not support bare-metal installs; Docker Compose is the only
+  maintainable path. Everything else here remains native.
+- **Machine learning is deliberately omitted.** The upstream compose file
+  includes an `immich-machine-learning` service for face recognition and
+  CLIP smart search; it is the heaviest part of the stack and this hardware
+  cannot carry it usefully. Immich logs
+  `Machine learning server became unhealthy` on startup as a result — this
+  is expected, not a fault. Re-enable it on better hardware.
+- Compose file and `.env` live in `/opt/immich`. The `.env` holds a
+  generated Postgres password and is `600 root:root`.
+- Photos in `~/Media/photos` (read-write ACL grant — Immich manages its own
+  library layout there); Postgres data in `/var/lib/immich/postgres`.
+- The published port is bound explicitly to the Tailscale IP in the compose
+  file (`100.x.y.z:2283:2283`) rather than `0.0.0.0`. Docker publishes ports
+  by inserting its own iptables rules **which bypass the host firewall**, so
+  binding the publish address is the actual enforcement here — a
+  `0.0.0.0` publish would be reachable on the LAN regardless of `nftables`.
+- **Storage quota** is set per-user in the Immich UI (Administration →
+  Users → Storage Quota). This is enforced by Immich at upload time, not by
+  the filesystem.
+- Docker networking is fragile across `nftables` reloads — see
+  `known-issues-and-decisions.md`.
+
 ## Dashboard
 
 - Not a real app — a single static HTML file
@@ -124,9 +153,26 @@
   (`config-templates/systemd/calibre-auto-import.service`).
 - Requires the `calibre` package (for `calibredb`) and `inotify-tools`.
 
+## Health check & alerting
+
+- `media-server-healthcheck.sh` on a 5-minute system timer, emailing on
+  state change only. See
+  [`monitoring-and-alerting.md`](monitoring-and-alerting.md).
+
+## Dashboard stats generator
+
+- `dashboard-stats.sh` on a 1-minute `systemd --user` timer, writing
+  `/srv/dashboard/stats.json` for the dashboard's live system panel.
+
+## External HDD auto-recovery
+
+- `media-hdd-recover.service` and `media-hdd-disconnect.service`, triggered
+  by udev on the media drive's connect/disconnect events. See
+  [`storage-hardware-reliability.md`](storage-hardware-reliability.md).
+
 ## Everything persists across reboots
 
-All system services are `enable`d (not just started); the two
-`systemd --user` services rely on `loginctl enable-linger sarang` being set
+All system services are `enable`d (not just started); the
+`systemd --user` services rely on `loginctl enable-linger <user>` being set
 (check with `loginctl show-user $USER -p Linger` — should say `yes`) so
 they run even without an active login session.

@@ -146,3 +146,72 @@ silently overwritten. Always `pgrep -x qbittorrent` first; if it's running,
 either fully quit it (tray → Exit, not just closing the window, since
 "close to tray" means the window close doesn't actually quit it) before
 editing, or make the change through the app's own UI instead.
+
+### Reloading `nftables` breaks running Docker networks
+
+**Real outage.** Docker inserts its own iptables/nftables rules when it
+creates a bridge network — including the NAT and DNS rules containers need
+to resolve each other by service name. A full `systemctl restart nftables`
+rewrites the entire ruleset from the config file and **silently drops
+Docker's rules**. Containers stay running but lose internal DNS:
+
+```
+Error: getaddrinfo EAI_AGAIN database
+```
+
+Docker does not notice or repair this. Critically, **restarting
+`docker.service` is not enough either** — it does not rebuild rules for
+networks that already exist. The only reliable fix is recreating the
+network:
+
+```
+cd /opt/immich && docker compose down && docker compose up -d
+```
+
+**Fix applied**: an `ExecStartPost=` drop-in on `nftables.service` runs
+`recreate-docker-networks.sh` after every (re)start, which discovers every
+compose project under `/opt/*/docker-compose.yml` and recreates it. It
+waits for the Docker API to actually answer (not just
+`systemctl is-active`) and verifies container counts afterwards.
+
+**Also note**: Docker's published ports bypass host firewall rules
+entirely. Bind published ports to a specific address in the compose file
+rather than relying on `nftables` to restrain them.
+
+### The firewall config file was found reduced to a no-op
+
+Discovered during a routine audit: `/etc/nftables.conf` contained only its
+comment header and a single `destroy table inet jellyfin_restrict` line —
+the table definition itself was gone. The live kernel ruleset had **no
+`jellyfin_restrict` table at all**, meaning Jellyfin (which binds
+`0.0.0.0:8096` and ignores its own address-restriction setting) was
+reachable from the entire LAN with no enforcement.
+
+Root cause of the truncation was never established. The lessons:
+
+- **Audit the loaded ruleset, not the config file** —
+  `nft list table inet jellyfin_restrict`. They can disagree.
+- The repo's `config-templates/nftables.conf` was intact and correct, and
+  restoring from it took seconds. This is a concrete argument for keeping
+  working configs in version control.
+- `nftables.service` is `Type=oneshot`: it loads rules and exits, so
+  `systemctl status` legitimately shows `inactive (dead)` with
+  `status=0/SUCCESS` while the rules remain loaded. That is **not** a
+  fault, and mistaking it for one wastes time.
+
+### `/etc/sysusers.d` went missing
+
+`systemd-sysusers` config directory simply did not exist when adding a new
+service user, so `tee` into it failed and every downstream step (user
+creation, `chown`, `setfacl`) failed in a confusing cascade. `mkdir -p
+/etc/sysusers.d` first. Worth checking early since the error messages point
+at the wrong thing.
+
+### `mountpoint -q` is not a liveness test
+
+A disconnected drive leaves a stale mount entry that passes `mountpoint -q`
+while every read fails. Both the auto-recovery script and the health check
+originally used exactly this test and both reported healthy during an
+active outage. Always pair it with a real read behind a `timeout`. Full
+detail in
+[`storage-hardware-reliability.md`](storage-hardware-reliability.md).

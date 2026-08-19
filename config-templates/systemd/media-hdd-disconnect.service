@@ -1,0 +1,6 @@
+[Unit]
+Description=Stop dependent services when media HDD disconnects
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/media-hdd-disconnect.sh
