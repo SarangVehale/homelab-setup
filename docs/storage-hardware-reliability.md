@@ -17,7 +17,7 @@ mounted **at the same path it previously occupied on internal storage**:
 ### Why mount at the original path instead of `/mnt/something`
 
 Every service references `~/Media/...` — Jellyfin library paths,
-Audiobookshelf, Calibre-Web, Navidrome, qBittorrent categories and save
+Audiobookshelf, Calibre-Web, qBittorrent categories and save
 paths, the ebook watcher. Mounting the new disk **at that same path** meant
 the migration required **zero config changes in any service**. As far as
 every app is concerned nothing moved; only what sits underneath the mount

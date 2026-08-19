@@ -27,7 +27,6 @@ require.
 | Jellyfin | Movies/TV streaming | 8096 | pacman |
 | Audiobookshelf | Audiobook streaming | 3333 | built from source |
 | Calibre-Web | Ebook library/reader | 8083 | built from source (Python venv) |
-| Navidrome | Music streaming (Subsonic API) | 4533 | upstream static binary |
 | Immich | Photo/video backup & timeline | 2283 | Docker Compose (the only container in the stack) |
 | qBittorrent | Torrent client (MyAnonamouse) | 8080 (WebUI) | pacman |
 | Dashboard | Links page + live system stats | 9000 | custom, `python -m http.server` |

@@ -5,7 +5,7 @@ title: Home media/self-hosting setup
 # Home media/self-hosting setup
 
 Documentation and setup scripts for a personal media/self-hosting stack —
-Jellyfin, Audiobookshelf, Calibre-Web, Navidrome, Immich, qBittorrent, all
+Jellyfin, Audiobookshelf, Calibre-Web, Immich, qBittorrent, all
 behind Tailscale — built specifically to be **reproducible on new hardware**
 without re-deriving every decision from scratch.
 

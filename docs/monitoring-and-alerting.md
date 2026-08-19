@@ -11,7 +11,7 @@ not dashboards nobody reads.
 | Check | Passes when |
 |---|---|
 | Disk space (`/home`, `~/Media`) | Below 90 % |
-| Jellyfin, Audiobookshelf, Calibre-Web, Navidrome | `systemctl is-active` **and** the port answers HTTP |
+| Jellyfin, Audiobookshelf, Calibre-Web | `systemctl is-active` **and** the port answers HTTP |
 | Immich (Docker) | Every container running **and** the port answers HTTP |
 | Media HDD mount | Mounted **and** responsive to a real read |
 | Tailscale | `tailscale status` succeeds |

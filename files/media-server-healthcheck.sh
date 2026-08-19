@@ -72,7 +72,6 @@ declare -A SERVICE_PORTS=(
     [jellyfin.service]=8096
     [audiobookshelf.service]=3333
     [calibre-web.service]=8083
-    [navidrome.service]=4533
 )
 for svc in "${!SERVICE_PORTS[@]}"; do
     port="${SERVICE_PORTS[$svc]}"

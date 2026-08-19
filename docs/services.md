@@ -103,19 +103,6 @@
   `<TAILSCALE_IP>` → Override local DNS) for automatic coverage on every
   Tailscale-connected device with zero per-device config.
 
-## Navidrome (music)
-
-- Music streaming, Subsonic-API-compatible (works with Symfonium, DSub,
-  play:Sub and every other Subsonic client — a large mobile ecosystem, which
-  is the main reason for choosing it over folding music into Jellyfin).
-- **Installed from the upstream static binary**, not the AUR — same
-  reasoning as Audiobookshelf and Calibre-Web (see the dependency-drift
-  section in `known-issues-and-decisions.md`). It's a single Go binary with
-  no runtime dependencies, so this is also the simplest option.
-- Runs as `navidrome.service` under a dedicated `navidrome` system user,
-  bound to the Tailscale IP, port **4533**.
-- Library at `~/Media/music` (read-only ACL grant), data in
-  `/var/lib/navidrome/data`. Rescans hourly (`ND_SCANSCHEDULE=1h`).
 
 ## Immich (photos & video)
 
