@@ -13,7 +13,7 @@ Running on a 2013/2014 Intel Haswell laptop with an external USB HDD, which
 is why a fair amount of this repo is about working within (and documenting)
 real hardware limits rather than pretending they aren't there.
 
-Full narrative overview: [README](README.md). **Using an AI agent to rebuild
+Full narrative overview: [README on GitHub](https://github.com/SarangVehale/homelab-setup#readme). **Using an AI agent to rebuild
 this? Start with [AGENTS.md](AGENTS.md)** instead of the docs below — it's
 the operating manual, not a reference doc.
 
@@ -68,6 +68,6 @@ live target.*
 
 ---
 
-[Overview →](README.md)
+[Architecture →](docs/architecture.md)
 
 <!-- nav:end -->

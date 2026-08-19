@@ -129,6 +129,6 @@ manually, the package/unit does it.
 
 ---
 
-[← Overview](../README.md) · [Home](../index.md) · [Storage & permissions →](storage-and-permissions.md)
+[← Home](../index.md) · [Storage & permissions →](storage-and-permissions.md)
 
 <!-- nav:end -->
