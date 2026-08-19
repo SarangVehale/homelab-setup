@@ -124,3 +124,11 @@ All the system-user services were installed via native packages (Jellyfin,
 AdGuard Home) or custom systemd units (Audiobookshelf, Calibre-Web) that
 create the account via `sysusers.d` — you don't create these accounts
 manually, the package/unit does it.
+
+<!-- nav:start -->
+
+---
+
+[← Overview](../README.md) · [Home](../index.md) · [Storage & permissions →](storage-and-permissions.md)
+
+<!-- nav:end -->

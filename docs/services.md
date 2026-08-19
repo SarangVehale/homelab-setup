@@ -176,3 +176,11 @@ All system services are `enable`d (not just started); the
 `systemd --user` services rely on `loginctl enable-linger <user>` being set
 (check with `loginctl show-user $USER -p Linger` — should say `yes`) so
 they run even without an active login session.
+
+<!-- nav:start -->
+
+---
+
+[← Security model](security-model.md) · [Home](../index.md) · [Known issues & decisions →](known-issues-and-decisions.md)
+
+<!-- nav:end -->

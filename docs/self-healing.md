@@ -100,3 +100,11 @@ Being honest about the boundaries — these are **not** self-healing:
 - **Credentials and accounts.** Never scripted, by design.
 - **Disk genuinely full of media.** Cleanup reclaims caches and logs, not
   the library. That decision stays human.
+
+<!-- nav:start -->
+
+---
+
+[← Monitoring & alerting](monitoring-and-alerting.md) · [Home](../index.md) · [Agent instructions →](../AGENTS.md)
+
+<!-- nav:end -->

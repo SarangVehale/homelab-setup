@@ -88,3 +88,11 @@ Keeping `ebooks-inbox` as a genuinely separate folder means:
 
 See `scripts/02-storage.sh` — creates the directory tree and applies all the
 ACL grants above. Idempotent; safe to re-run.
+
+<!-- nav:start -->
+
+---
+
+[← Architecture](architecture.md) · [Home](../index.md) · [Security model →](security-model.md)
+
+<!-- nav:end -->

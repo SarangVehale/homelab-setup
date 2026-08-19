@@ -80,3 +80,11 @@ check "<name>" <1-if-ok-else-0> "<detail shown in the mail>"
 ```
 
 State handling and alert deduplication are automatic.
+
+<!-- nav:start -->
+
+---
+
+[← Transcoding](transcoding.md) · [Home](../index.md) · [Self-healing →](self-healing.md)
+
+<!-- nav:end -->

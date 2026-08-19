@@ -210,3 +210,11 @@ To test the fan, induce real CPU load and watch temperatures. Healthy
 behaviour is a plateau (observed: ~74 °C under sustained full load on all
 four threads, from a ~49 °C idle) with fast recovery once load stops — not
 a climb toward the 100 °C critical point.
+
+<!-- nav:start -->
+
+---
+
+[← Known issues & decisions](known-issues-and-decisions.md) · [Home](../index.md) · [Transcoding →](transcoding.md)
+
+<!-- nav:end -->

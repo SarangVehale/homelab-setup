@@ -63,3 +63,11 @@ the scripts above — see [`config-templates/`](config-templates/) and
 *Private infrastructure details (IP addresses, hostnames) have been replaced
 with placeholders throughout — this repo documents the **approach**, not a
 live target.*
+
+<!-- nav:start -->
+
+---
+
+[Overview →](README.md)
+
+<!-- nav:end -->

@@ -148,3 +148,11 @@ longer exists.
 - [`docs/services.md`](docs/services.md) — per-service specifics
 - [`scripts/`](scripts/) — the actual automation, numbered and idempotent
 - [`docs/known-issues-and-decisions.md`](docs/known-issues-and-decisions.md) — read before you start, not after something breaks
+
+<!-- nav:start -->
+
+---
+
+[← Self-healing](docs/self-healing.md) · [Home](index.md)
+
+<!-- nav:end -->

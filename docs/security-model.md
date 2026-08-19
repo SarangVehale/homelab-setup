@@ -92,3 +92,11 @@ after.
   Home is ever down, this machine's own DNS resolution breaks too, not just
   other devices'. Accepted tradeoff for "the host benefits from ad-blocking
   too."
+
+<!-- nav:start -->
+
+---
+
+[← Storage & permissions](storage-and-permissions.md) · [Home](../index.md) · [Services →](services.md)
+
+<!-- nav:end -->

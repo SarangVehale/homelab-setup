@@ -215,3 +215,11 @@ originally used exactly this test and both reported healthy during an
 active outage. Always pair it with a real read behind a `timeout`. Full
 detail in
 [`storage-hardware-reliability.md`](storage-hardware-reliability.md).
+
+<!-- nav:start -->
+
+---
+
+[← Services](services.md) · [Home](../index.md) · [Storage & hardware reliability →](storage-hardware-reliability.md)
+
+<!-- nav:end -->

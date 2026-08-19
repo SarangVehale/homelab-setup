@@ -148,3 +148,11 @@ than deleted, precisely so the decision can be reversed on better hardware.
 uncapped `-cq 20` run was on track to produce a **15 GB** file from a 1.9 GB
 source — quality-targeted encoding without a cap balloons badly on 4K.
 Cap the bitrate.
+
+<!-- nav:start -->
+
+---
+
+[← Storage & hardware reliability](storage-hardware-reliability.md) · [Home](../index.md) · [Monitoring & alerting →](monitoring-and-alerting.md)
+
+<!-- nav:end -->

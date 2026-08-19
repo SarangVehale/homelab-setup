@@ -97,3 +97,11 @@ scripts/                numbered, idempotent setup scripts
 config-templates/       the actual config files in use, as templates
 files/                  standalone scripts deployed as-is (e.g. the watcher)
 ```
+
+<!-- nav:start -->
+
+---
+
+[← Home](index.md) · [Architecture →](docs/architecture.md)
+
+<!-- nav:end -->
