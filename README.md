@@ -22,17 +22,31 @@ require.
 
 ## What's actually running
 
-| Service | Purpose | Reachable at | Install method |
+| Service | Purpose | Port | Install method |
 |---|---|---|---|
-| qBittorrent | Torrent client (MyAnonamouse) | local only + WebUI via Tailscale | pacman |
-| Audiobookshelf | Audiobook streaming | Tailscale only | built from source |
-| Calibre-Web | Ebook library/reader | Tailscale only | built from source (Python venv) |
-| Jellyfin | Movies/TV streaming | Tailscale only (firewall-enforced) | pacman |
-| AdGuard Home | Network-wide DNS ad/tracker blocking | LAN + Tailscale | pacman |
-| Dashboard | Static links page to everything above | Tailscale only | custom, `python -m http.server` |
-| Calibre auto-import watcher | Auto-imports new ebook downloads into the library | n/a (background) | custom systemd --user service |
+| Jellyfin | Movies/TV streaming | 8096 | pacman |
+| Audiobookshelf | Audiobook streaming | 3333 | built from source |
+| Calibre-Web | Ebook library/reader | 8083 | built from source (Python venv) |
+| Navidrome | Music streaming (Subsonic API) | 4533 | upstream static binary |
+| Immich | Photo/video backup & timeline | 2283 | Docker Compose (the only container in the stack) |
+| qBittorrent | Torrent client (MyAnonamouse) | 8080 (WebUI) | pacman |
+| Dashboard | Links page + live system stats | 9000 | custom, `python -m http.server` |
+| AdGuard Home | Network-wide DNS ad/tracker blocking | — | pacman — **removed from live deploy**, kept as reference |
+
+All reachable over Tailscale only. Background units: ebook auto-import
+watcher, health check + email alerting, dashboard stats generator, and
+external-HDD auto-recovery.
 
 Full details on each in [`docs/services.md`](docs/services.md).
+
+## Storage
+
+The media library lives on an **external 2 TB USB HDD**, mounted at
+`~/Media` — the same path it occupied on internal storage, so no service
+config referenced the move. Getting that drive to stay connected required
+three separate fixes; see
+[`docs/storage-hardware-reliability.md`](docs/storage-hardware-reliability.md)
+before attaching external storage anywhere.
 
 ## Read these in order
 
@@ -41,6 +55,9 @@ Full details on each in [`docs/services.md`](docs/services.md).
 3. [`docs/security-model.md`](docs/security-model.md) — why Tailscale-only, the firewall, and its gotchas
 4. [`docs/services.md`](docs/services.md) — per-service setup notes, ports, config locations
 5. [`docs/known-issues-and-decisions.md`](docs/known-issues-and-decisions.md) — hardware limitations, bugs hit, and what changes on new hardware
+6. [`docs/storage-hardware-reliability.md`](docs/storage-hardware-reliability.md) — external HDD, the USB disconnect saga, Wi-Fi ceiling
+7. [`docs/transcoding.md`](docs/transcoding.md) — the remote-GPU re-encode pipeline **and why not to repeat it on better hardware**
+8. [`docs/monitoring-and-alerting.md`](docs/monitoring-and-alerting.md) — health checks and email alerts
 
 ## Migrating to new hardware
 

@@ -1,0 +1,6 @@
+[Unit]
+Description=Media server health check (disk, services, HDD mount, Tailscale)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/media-server-healthcheck.sh

@@ -5,9 +5,13 @@ title: Home media/self-hosting setup
 # Home media/self-hosting setup
 
 Documentation and setup scripts for a personal media/self-hosting stack —
-qBittorrent, Audiobookshelf, Calibre-Web, Jellyfin, AdGuard Home, all behind
-Tailscale — built specifically to be **reproducible on new hardware** without
-re-deriving every decision from scratch.
+Jellyfin, Audiobookshelf, Calibre-Web, Navidrome, Immich, qBittorrent, all
+behind Tailscale — built specifically to be **reproducible on new hardware**
+without re-deriving every decision from scratch.
+
+Running on a 2013/2014 Intel Haswell laptop with an external USB HDD, which
+is why a fair amount of this repo is about working within (and documenting)
+real hardware limits rather than pretending they aren't there.
 
 Full narrative overview: [README](README.md). **Using an AI agent to rebuild
 this? Start with [AGENTS.md](AGENTS.md)** instead of the docs below — it's
@@ -20,6 +24,9 @@ the operating manual, not a reference doc.
 - [Security model](docs/security-model.md) — why Tailscale-only even on the LAN, why the firewall (not app config) is the real enforcement layer, the port-forwarding decision
 - [Services](docs/services.md) — per-service setup notes, ports, config locations, gotchas
 - [Known issues & decisions](docs/known-issues-and-decisions.md) — **read this before migrating to new hardware.** Separates genuinely reusable fixes from hardware-specific workarounds (the old Haswell iGPU's HEVC transcoding limitations especially)
+- [Storage & hardware reliability](docs/storage-hardware-reliability.md) — external USB HDD migration, and the three separate root causes behind its disconnects (UAS driver, autosuspend, TLP). Also the Wi-Fi hardware ceiling
+- [Transcoding](docs/transcoding.md) — the remote-GPU batch re-encode pipeline, the bugs hit, and **why it's a workaround not to repeat on capable hardware**
+- [Monitoring & alerting](docs/monitoring-and-alerting.md) — health checks that don't trust `systemctl is-active`, and state-change-only email alerts
 
 ## Setup scripts
 
@@ -39,7 +46,8 @@ anywhere in this repo.
 | [`07-qbittorrent.sh`](scripts/07-qbittorrent.sh) | Private-tracker settings, categories, WebUI binding |
 | [`08-dns-adguard.sh`](scripts/08-dns-adguard.sh) | `systemd-resolved` port-53 conflict fix, AdGuard Home wiring (kept for reference — removed from the live deployment, see AGENTS.md) |
 | [`09-watcher.sh`](scripts/09-watcher.sh) | Ebook auto-import watcher |
-| [`10-dashboard.sh`](scripts/10-dashboard.sh) | Static links dashboard |
+| [`10-dashboard.sh`](scripts/10-dashboard.sh) | Links dashboard + live system stats panel |
+| [`11-transcode-pipeline.sh`](scripts/11-transcode-pipeline.sh) | Batch HEVC→H.264 re-encode, offloaded to a remote GPU (overlaps transfer/transcode/pull-back) |
 
 ## Config templates
 

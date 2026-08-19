@@ -1,0 +1,20 @@
+[Unit]
+Description=Navidrome music server
+Requires=network.target
+After=tailscale-online.target
+Wants=tailscale-online.target
+
+[Service]
+Type=simple
+User=navidrome
+Group=navidrome
+ExecStart=/opt/navidrome/navidrome
+Environment=ND_MUSICFOLDER=__HOME__/Media/music
+Environment=ND_DATAFOLDER=/var/lib/navidrome/data
+Environment=ND_ADDRESS=__TAILSCALE_IP__
+Environment=ND_PORT=4533
+Environment=ND_SCANSCHEDULE=1h
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
