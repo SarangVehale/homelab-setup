@@ -1,0 +1,12 @@
+[Unit]
+Description=Nightly service-state backup
+
+[Timer]
+OnCalendar=daily
+# Backups briefly stop Jellyfin/Audiobookshelf, so run them at a quiet hour
+# rather than whenever the machine happens to boot.
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -57,6 +57,7 @@ before attaching external storage anywhere.
 6. [`docs/storage-hardware-reliability.md`](docs/storage-hardware-reliability.md) — external HDD, the USB disconnect saga, Wi-Fi ceiling
 7. [`docs/transcoding.md`](docs/transcoding.md) — the remote-GPU re-encode pipeline **and why not to repeat it on better hardware**
 8. [`docs/monitoring-and-alerting.md`](docs/monitoring-and-alerting.md) — health checks and email alerts
+9. [`docs/self-healing.md`](docs/self-healing.md) — automatic repair, backups, restore procedures
 
 ## Migrating to new hardware
 

@@ -27,6 +27,7 @@ the operating manual, not a reference doc.
 - [Storage & hardware reliability](docs/storage-hardware-reliability.md) — external USB HDD migration, and the three separate root causes behind its disconnects (UAS driver, autosuspend, TLP). Also the Wi-Fi hardware ceiling
 - [Transcoding](docs/transcoding.md) — the remote-GPU batch re-encode pipeline, the bugs hit, and **why it's a workaround not to repeat on capable hardware**
 - [Monitoring & alerting](docs/monitoring-and-alerting.md) — health checks that don't trust `systemctl is-active`, and state-change-only email alerts
+- [Self-healing](docs/self-healing.md) — what repairs itself automatically, nightly state backups, and an honest list of what still needs a human
 
 ## Setup scripts
 
@@ -48,6 +49,7 @@ anywhere in this repo.
 | [`09-watcher.sh`](scripts/09-watcher.sh) | Ebook auto-import watcher |
 | [`10-dashboard.sh`](scripts/10-dashboard.sh) | Links dashboard + live system stats panel |
 | [`11-transcode-pipeline.sh`](scripts/11-transcode-pipeline.sh) | Batch HEVC→H.264 re-encode, offloaded to a remote GPU (overlaps transfer/transcode/pull-back) |
+| [`12-self-healing.sh`](scripts/12-self-healing.sh) | Auto-remediating health check, nightly state backups, journal cap, restart hardening |
 
 ## Config templates
 

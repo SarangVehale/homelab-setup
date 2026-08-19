@@ -1,0 +1,7 @@
+[Unit]
+Description=Back up service state (databases, configs) to the media HDD
+After=media-hdd-recover.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/media-server-backup.sh
