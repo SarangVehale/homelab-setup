@@ -75,17 +75,35 @@ install_script "$REPO/files/media-server-healthcheck.sh" /usr/local/bin/media-se
 echo "==> Installing state backup"
 install_script "$REPO/files/media-server-backup.sh" /usr/local/bin/media-server-backup.sh
 
+# Unit files need the same placeholder substitution the scripts get - a
+# literal __HOME__ in a ReadWritePaths= silently produces a sandbox that
+# denies the service its own data directory.
+install_unit() {
+    local src="$1" dest="$2" tmp
+    tmp=$(mktemp)
+    sed -e "s|__TAILSCALE_IP__|$TS_IP|g" \
+        -e "s|__ALERT_EMAIL__|$ALERT_EMAIL|g" \
+        -e "s|__HOME__|$HOME|g" "$src" > "$tmp"
+    if grep -q '__[A-Z_]*__' "$tmp"; then
+        echo "ERROR: unsubstituted placeholder left in $src:" >&2
+        grep -o '__[A-Z_]*__' "$tmp" | sort -u >&2
+        rm -f "$tmp"; exit 1
+    fi
+    sudo install -m 644 -o root -g root "$tmp" "$dest"
+    rm -f "$tmp"
+}
+
 echo "==> Installing timers"
 for u in media-server-healthcheck.service media-server-healthcheck.timer \
          media-server-backup.service media-server-backup.timer; do
-    sudo cp "$REPO/config-templates/systemd/$u" "/etc/systemd/system/$u"
+    install_unit "$REPO/config-templates/systemd/$u" "/etc/systemd/system/$u"
 done
 
 echo "==> Restart hardening + sandboxing"
 for s in jellyfin audiobookshelf calibre-web; do
     sudo mkdir -p "/etc/systemd/system/$s.service.d"
-    sudo cp "$REPO/config-templates/systemd/$s-override.conf" \
-            "/etc/systemd/system/$s.service.d/override.conf"
+    install_unit "$REPO/config-templates/systemd/$s-override.conf" \
+                 "/etc/systemd/system/$s.service.d/override.conf"
 done
 
 sudo systemctl daemon-reload

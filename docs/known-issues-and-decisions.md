@@ -285,6 +285,33 @@ with `Unrecognized archive format`, and cleans **nothing** — so it is
 useless in precisely the situation where you need it. Remove those entries
 first (note they are directories, so `rm -f` alone will not do it).
 
+
+
+### An unsubstituted placeholder in a sandbox silently denies a service its own data
+
+A deploy substituted `__HOME__` in the scripts it installed but copied
+systemd unit files verbatim, leaving:
+
+```
+ReadWritePaths=/opt/calibre-web __HOME__/Media/ebooks
+```
+
+systemd accepts this without complaint — the path simply does not exist, so
+`ProtectSystem=strict` left the real library directory read-only and
+Calibre-Web could not write to it. Nothing in `systemctl status` points at
+the cause.
+
+Template substitution must cover **every** deployed artefact, not just the
+obvious ones, and the deploy should refuse to install a file that still
+contains a `__PLACEHOLDER__`. `scripts/12-self-healing.sh` now greps for
+that pattern and aborts.
+
+More generally: when adding a sandbox directive, enumerate every path the
+service writes to — data, config, cache, logs — and verify each one exists
+after substitution. Two separate outages here came from an incomplete
+`ReadWritePaths` (this one, and a 17 GB cache buildup caused by Jellyfin
+being unable to clean `/var/cache/jellyfin`).
+
 <!-- nav:start -->
 
 ---
