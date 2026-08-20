@@ -16,7 +16,7 @@ STATE_FILE="$STATE_DIR/state"
 MAILTO="__ALERT_EMAIL__"
 TS_IP="__TAILSCALE_IP__"
 MEDIA="__HOME__/Media"
-DISK_WARN_PCT=90
+DISK_WARN_PCT=85
 MAX_HEAL_ATTEMPTS=3
 TAG="healthcheck"
 
@@ -138,8 +138,22 @@ disk_probe() {
     [ -n "$pct" ] && [ "$pct" -lt "$DISK_WARN_PCT" ]
 }
 # Reclaim the safely-reclaimable things before crying about disk space.
+# Ordered cheapest/safest first. Everything here is regenerable by
+# definition - no service state or media is touched.
 disk_repair() {
+    # Jellyfin's transcode/trickplay cache. This reached 17GB on a 46GB
+    # root once - by far the largest growth source on this machine, and it
+    # does not bound itself. Only prune files old enough not to be part of
+    # an in-progress stream.
+    find /var/cache/jellyfin -type f -mmin +120 -delete 2>/dev/null
+    find /var/cache/jellyfin -type d -empty -delete 2>/dev/null
+
+    # Downloaded package archives. pacman never cleans these; 2566 files
+    # totalling 8.2GB had accumulated. Keeps installed versions.
+    paccache -rk1 2>/dev/null || pacman -Sc --noconfirm 2>/dev/null
+
     journalctl --vacuum-size=500M
+    rm -rf /var/lib/systemd/coredump/* 2>/dev/null
     docker system prune -af --filter "until=168h" 2>/dev/null
     find "__HOME__/.cache" -type f -atime +30 -delete 2>/dev/null
 }

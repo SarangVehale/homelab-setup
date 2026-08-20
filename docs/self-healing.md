@@ -16,7 +16,7 @@ someone to notice.
 | Firewall table missing from the kernel | Health check | Reload `nftables` |
 | Docker networking broken by an `nftables` reload | `ExecStartPost` on `nftables.service` | Recreate every compose project |
 | Tailscale down | Health check | `systemctl restart tailscaled` |
-| Disk filling up | Health check (≥ 90 %) | Vacuum journal, prune old Docker layers, drop 30-day-old cache files |
+| Disk filling up | Health check (≥ 85 %) | Trim Jellyfin transcode cache, clean pacman package cache, vacuum journal, clear core dumps, prune old Docker layers, drop 30-day-old user cache |
 | Service crash | systemd | `Restart=always`, 10 s backoff |
 | Journal growing unbounded | — | Capped at 500 MB / 1 month by config |
 

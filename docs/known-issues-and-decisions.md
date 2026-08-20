@@ -216,6 +216,46 @@ active outage. Always pair it with a real read behind a `timeout`. Full
 detail in
 [`storage-hardware-reliability.md`](storage-hardware-reliability.md).
 
+
+
+### Jellyfin's transcode cache is unbounded and will fill the root disk
+
+`/var/cache/jellyfin` reached **17 GB** on a 46 GB root filesystem, the
+single largest growth source on this machine. Jellyfin prunes it on its own
+schedule but that pruning is best-effort and does not enforce a size cap.
+
+Two things made it worse here:
+
+- Every HEVC playback before the library was re-encoded produced transcode
+  segments (see [`transcoding.md`](transcoding.md)).
+- A `ProtectSystem=strict` sandbox was applied **without**
+  `/var/cache/jellyfin` in `ReadWritePaths`, so Jellyfin's own cleanup
+  failed with `Error deleting encoded media cache file ... Read-only file
+  system` and the cache grew unchecked. If you sandbox a service, every
+  path it writes to must be listed - including caches.
+
+`/var/cache/pacman/pkg` is a distant second at 8.2 GB / 2566 files; pacman
+never cleans it automatically.
+
+Both are now trimmed by the health check's disk repair.
+
+### A full root disk takes down the whole stack, loudly and confusingly
+
+When `/` hit 100%, the visible symptoms were all misleading:
+
+- Jellyfin crash-looping with `SIGABRT` and a core dump each time - the
+  real error, buried under stack traces, was
+  `SQLite Error 10: 'disk I/O error'`.
+- A deploy script silently installing a **truncated** file, because piping
+  into `sudo tee` on a full disk writes what fits and reports failure only
+  at the end.
+- `Restart=always` amplifying the crash into a loop that wrote a core dump
+  every 10 seconds, consuming the little remaining space.
+
+Lessons applied: bound restarts with `StartLimitBurst`, cap core dumps and
+the journal, install files atomically after validating them, and check free
+space before writing anything.
+
 <!-- nav:start -->
 
 ---
