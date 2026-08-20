@@ -90,6 +90,6 @@ log "backup complete: $OUT ($SIZE)"
 
 if [ -n "${FAILURES:-}" ]; then
     printf 'Subject: [media-server] Backup completed with errors\nTo: %s\n\nBackup to %s finished, but these components failed:\n\n%b\nHost: %s\n' \
-        "$MAILTO" "$OUT" "$FAILURES" "$(hostname)" | msmtp "$MAILTO" 2>/dev/null
+        "$MAILTO" "$OUT" "$FAILURES" "${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo unknown)}" | msmtp "$MAILTO" 2>/dev/null
     exit 1
 fi

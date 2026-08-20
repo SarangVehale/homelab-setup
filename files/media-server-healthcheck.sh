@@ -69,7 +69,7 @@ $detail
 No action needed - this is informational. If it recurs it will
 escalate to a PROBLEM alert after ${MAX_HEAL_ATTEMPTS} attempts.
 
-Host: $(hostname)"
+Host: ${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo unknown)}"
                 fi
                 set_ "$name" "healed"
                 return
@@ -87,14 +87,14 @@ Host: $(hostname)"
 
 $detail
 
-Host: $(hostname)"
+Host: ${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo unknown)}"
         else
             send_mail "[media-server] RECOVERED: $name" \
 "$name is back to normal.
 
 $detail
 
-Host: $(hostname)"
+Host: ${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo unknown)}"
         fi
     fi
     set_ "$name" "$now"
