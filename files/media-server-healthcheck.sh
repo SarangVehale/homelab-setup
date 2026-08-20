@@ -148,12 +148,23 @@ disk_repair() {
     find /var/cache/jellyfin -type f -mmin +120 -delete 2>/dev/null
     find /var/cache/jellyfin -type d -empty -delete 2>/dev/null
 
+    # Truncated downloads left behind by a previous disk-full event.
+    # These must go FIRST: pacman tries to parse every file in the cache as
+    # an archive, chokes on the corrupt ones ("Unrecognized archive
+    # format"), and then cleans nothing - so it cannot recover from exactly
+    # the situation where cleanup matters most. Note these are directories,
+    # not files.
+    find /var/cache/pacman/pkg -maxdepth 1 \
+         \( -name 'download-*' -o -name '*.part' \) -exec rm -rf {} + 2>/dev/null
+
     # Downloaded package archives. pacman never cleans these; 2566 files
     # totalling 8.2GB had accumulated. Keeps installed versions.
     paccache -rk1 2>/dev/null || pacman -Sc --noconfirm 2>/dev/null
 
     journalctl --vacuum-size=500M
-    rm -rf /var/lib/systemd/coredump/* 2>/dev/null
+    # find, not a glob: globs are expanded by the calling shell, so they
+    # silently no-op when that shell cannot read the directory.
+    find /var/lib/systemd/coredump -mindepth 1 -delete 2>/dev/null
     docker system prune -af --filter "until=168h" 2>/dev/null
     find "__HOME__/.cache" -type f -atime +30 -delete 2>/dev/null
 }

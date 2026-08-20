@@ -256,6 +256,35 @@ Lessons applied: bound restarts with `StartLimitBurst`, cap core dumps and
 the journal, install files atomically after validating them, and check free
 space before writing anything.
 
+
+
+### `sudo rm -rf /some/root-only/dir/*` silently does nothing
+
+A shell glob is expanded by the **calling** shell, before `sudo` runs. If
+your user cannot read the directory, the glob does not expand, gets passed
+through literally, and `rm -f` exits 0 having deleted nothing. This wasted
+a cleanup cycle on a full disk: `sudo rm -rf /var/cache/jellyfin/*`
+reported success while the 17 GB was still there, because the invoking user
+had no read permission on that directory.
+
+Use `find` (which does its own traversal, as root) instead:
+
+```bash
+sudo find /var/cache/jellyfin -mindepth 1 -delete
+```
+
+Anything in this repo that cleans a root-owned directory uses `find` for
+this reason.
+
+### `pacman -Sc` cannot clean up after a disk-full event
+
+When the disk fills mid-download, pacman leaves behind truncated
+`download-*` directories and `*.part` files. On the next `pacman -Sc` it
+tries to parse every cache entry as an archive, fails on the corrupt ones
+with `Unrecognized archive format`, and cleans **nothing** — so it is
+useless in precisely the situation where you need it. Remove those entries
+first (note they are directories, so `rm -f` alone will not do it).
+
 <!-- nav:start -->
 
 ---
