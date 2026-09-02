@@ -25,7 +25,7 @@ mkinitcpio()    { echo "      [dry] mkinitcpio $*"; return 0; }
 SHIM
     tail -n +2 "$REPO/$TARGET" \
       | sed 's|^REPO=.*|REPO="$REPO_OVERRIDE"|' \
-      | sed 's|^GRUB_TMP=$(mktemp)|GRUB_TMP=$(mktemp); cp /boot/grub/grub.cfg "$GRUB_TMP"|'
+      | sed 's|^GRUB_TMP=.*|GRUB_TMP=$(mktemp); cp /boot/grub/grub.cfg "$GRUB_TMP"  # dry-run: seed so validation has something to check|'
 } > "$TMP"
 
 bash -n "$TMP" || { echo "SYNTAX ERROR" >&2; rm -f "$TMP"; exit 1; }

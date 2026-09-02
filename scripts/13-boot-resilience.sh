@@ -110,13 +110,30 @@ fi
 sudo sed -i 's/^GRUB_TIMEOUT=5$/GRUB_TIMEOUT=10/' /etc/default/grub 2>/dev/null || true
 
 echo "==> 4. Fallback initramfs"
-# The fallback image includes all modules rather than an autodetected
-# subset, so it still boots when hardware changes or autodetect got it wrong.
-if ! ls /boot/initramfs-*fallback* >/dev/null 2>&1; then
-    echo "    building fallback initramfs..."
-    sudo mkinitcpio -P
-else
+# The fallback image is built with -S autodetect, i.e. it includes ALL
+# modules rather than only those detected on the running system. That is
+# what makes it boot when autodetect guessed wrong, hardware changed, or the
+# default image is broken. Arch enables it by default; this install had the
+# preset commented out, leaving no second image to fall back to.
+PRESET=/etc/mkinitcpio.d/linux.preset
+if ls /boot/initramfs-*fallback* >/dev/null 2>&1; then
     echo "    already present."
+else
+    BOOT_FREE_MB=$(df --output=avail -m /boot | tail -1 | tr -d ' ')
+    if [ "${BOOT_FREE_MB:-0}" -lt 150 ]; then
+        echo "    SKIPPING: only ${BOOT_FREE_MB}MB free on /boot (need ~150MB)." >&2
+    else
+        if ! grep -q "^PRESETS=.*fallback" "$PRESET" 2>/dev/null; then
+            echo "    enabling the fallback preset..."
+            sudo cp "$PRESET" "${PRESET}.bak.$(date +%s)"
+            sudo sed -i \
+                -e "s|^PRESETS=('default')|PRESETS=('default' 'fallback')|" \
+                -e "s|^#fallback_image=|fallback_image=|" \
+                -e "s|^#fallback_options=|fallback_options=|" \
+                "$PRESET"
+        fi
+        sudo mkinitcpio -P
+    fi
 fi
 
 echo "==> 5. Regenerating GRUB config"
@@ -127,10 +144,14 @@ GRUB_BACKUP="/boot/grub/grub.cfg.bak.$(date +%s)"
 sudo cp /boot/grub/grub.cfg "$GRUB_BACKUP"
 echo "    backup: $GRUB_BACKUP"
 
-GRUB_TMP=$(mktemp)
+# Must be root-owned and NOT in /tmp: /tmp here is a tmpfs with usrquota,
+# and grub-mkconfig running as root still gets charged against the *file
+# owner's* quota, failing with a misleading "Permission denied". Staging
+# beside the destination also keeps the final install on one filesystem.
+GRUB_TMP="/boot/grub/grub.cfg.new.$$"
 if ! sudo grub-mkconfig -o "$GRUB_TMP" 2>&1 | sed 's/^/    /'; then
     echo "ERROR: grub-mkconfig failed. Existing grub.cfg left untouched." >&2
-    rm -f "$GRUB_TMP"; exit 1
+    sudo rm -f "$GRUB_TMP"; exit 1
 fi
 
 # Must contain at least the normal boot entry, or we are about to install a
@@ -138,11 +159,11 @@ fi
 if ! grep -q "^menuentry 'Arch Linux'" "$GRUB_TMP"; then
     echo "ERROR: generated grub.cfg has no primary Arch Linux entry." >&2
     echo "       Refusing to install it. Existing config untouched." >&2
-    rm -f "$GRUB_TMP"; exit 1
+    sudo rm -f "$GRUB_TMP"; exit 1
 fi
 
 sudo install -m 600 -o root -g root "$GRUB_TMP" /boot/grub/grub.cfg
-rm -f "$GRUB_TMP"
+sudo rm -f "$GRUB_TMP"
 echo "    installed, $(grep -c '^\s*menuentry' /boot/grub/grub.cfg || true) menu entries"
 
 echo

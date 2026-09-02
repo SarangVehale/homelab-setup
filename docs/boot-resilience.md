@@ -213,6 +213,31 @@ is running the control flow. `scripts/dry-run.sh` does that with `sudo`,
 
 Run it against any deploy script before running it for real.
 
+
+### Two traps in regenerating GRUB
+
+**Do not stage the new `grub.cfg` in `/tmp`.** On this machine `/tmp` is a
+tmpfs mounted with `usrquota`. `grub-mkconfig` running under `sudo` writes
+into the staging file, and quota is charged against the *file owner* — so a
+file created by the unprivileged user fails with a misleading
+`Permission denied` even though the writer is root. Stage beside the
+destination instead (`/boot/grub/grub.cfg.new.$$`), which is root-owned and
+on the same filesystem as the target.
+
+**In `/etc/grub.d/` scripts, `grub-probe` is the `${grub_probe}` variable,
+not a command on `PATH`.** Calling it bare fails silently, which made a
+custom entry skip itself with "could not determine partition UUIDs" while
+`grub-mkconfig` otherwise reported success.
+
+### The fallback initramfs may be disabled
+
+Arch normally ships `PRESETS=('default' 'fallback')`, but this install had
+the fallback commented out in `/etc/mkinitcpio.d/linux.preset`, so there was
+no second image to boot when the first one fails. The fallback is built with
+`-S autodetect` — every module rather than only those detected on the
+running system — which is exactly what makes it work when the default does
+not. Check with `ls /boot/initramfs-*fallback*`.
+
 <!-- nav:start -->
 
 ---

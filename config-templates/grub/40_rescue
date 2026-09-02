@@ -18,8 +18,13 @@ set -e
 # shellcheck disable=SC1091
 . /usr/share/grub/grub-mkconfig_lib
 
-BOOT_UUID="$(grub_probe --target=fs_uuid /boot 2>/dev/null || true)"
-ROOT_UUID="$(grub_probe --target=fs_uuid / 2>/dev/null || true)"
+# grub-mkconfig_lib provides grub-probe as the ${grub_probe} VARIABLE, not
+# as a command on PATH. Calling it bare silently fails, which made this
+# script skip itself with "could not determine partition UUIDs".
+: "${grub_probe:=$(command -v grub-probe 2>/dev/null || echo /usr/bin/grub-probe)}"
+
+BOOT_UUID="$("${grub_probe}" --target=fs_uuid /boot 2>/dev/null || true)"
+ROOT_UUID="$("${grub_probe}" --target=fs_uuid / 2>/dev/null || true)"
 KERNEL="/vmlinuz-linux"
 INITRD="/initramfs-linux.img"
 
