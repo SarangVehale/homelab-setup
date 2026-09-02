@@ -47,6 +47,33 @@ sudo install -m 644 -o root -g root \
      /etc/systemd/system/nftables.service.d/docker-network-fix.conf
 sudo systemctl daemon-reload
 
+echo "==> 2b. systemd-networkd-wait-online"
+# This waits for a networkd-managed link to come online. Wi-Fi here is
+# managed by iwd, so the only link networkd sees is Ethernet - and when no
+# cable is plugged in it waits the full 2 minutes and then fails. That was
+# 2min 0s of a 2min 24s boot. Nothing in this stack needs networkd's online
+# state (tailscale-online.target is what services actually order against).
+if systemctl is-enabled systemd-networkd-wait-online.service >/dev/null 2>&1; then
+    sudo systemctl disable systemd-networkd-wait-online.service
+    echo "    disabled (was adding ~2min to every boot without a cable)"
+else
+    echo "    already disabled."
+fi
+
+echo "==> 2c. Checking for a plaintext Tailscale auth key"
+# A one-shot auth key baked into a unit file is a credential sitting in
+# plaintext in /etc, and it gets swept into config backups. tailscaled
+# persists its own auth state, so this unit is redundant after first login.
+if sudo grep -qs -- '--authkey' /etc/systemd/system/tailscale-autoconnect.service 2>/dev/null; then
+    echo "    WARNING: tailscale-autoconnect.service contains a plaintext auth key."
+    echo "             It is also currently failing (keys are single-use/expiring)."
+    echo "             tailscaled already persists login state, so this unit is"
+    echo "             redundant. Disabling it; rotate the key in the admin console."
+    sudo systemctl disable --now tailscale-autoconnect.service 2>/dev/null || true
+else
+    echo "    none found."
+fi
+
 echo "==> 3. Recovery entries in GRUB"
 sudo install -m 755 -o root -g root "$REPO/config-templates/grub/40_rescue" \
      /etc/grub.d/40_rescue
