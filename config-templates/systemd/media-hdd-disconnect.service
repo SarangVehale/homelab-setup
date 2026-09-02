@@ -3,4 +3,7 @@ Description=Stop dependent services when media HDD disconnects
 
 [Service]
 Type=oneshot
+# Type=oneshot defaults to TimeoutStartSec=infinity. Without an explicit
+# value a hung call here blocks boot indefinitely with no error.
+TimeoutStartSec=60
 ExecStart=/usr/local/bin/media-hdd-disconnect.sh

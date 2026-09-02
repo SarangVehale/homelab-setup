@@ -58,6 +58,7 @@ before attaching external storage anywhere.
 7. [`docs/transcoding.md`](docs/transcoding.md) — the remote-GPU re-encode pipeline **and why not to repeat it on better hardware**
 8. [`docs/monitoring-and-alerting.md`](docs/monitoring-and-alerting.md) — health checks and email alerts
 9. [`docs/self-healing.md`](docs/self-healing.md) — automatic repair, backups, restore procedures
+10. [`docs/boot-resilience.md`](docs/boot-resilience.md) — **read before adding a systemd unit**; recovery entries, timeouts, and the boot hang this repo caused
 
 ## Migrating to new hardware
 

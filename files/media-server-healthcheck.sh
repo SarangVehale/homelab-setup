@@ -106,31 +106,31 @@ svc_probe() {
     [ "$(systemctl is-active "$1" 2>/dev/null)" = "active" ] || return 1
     [ "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 "http://${TS_IP}:$2/" 2>/dev/null)" != "000" ]
 }
-svc_repair() { systemctl restart "$1"; }
+svc_repair() { timeout 90 systemctl restart "$1"; }
 
 compose_probe() {
     local dir="$1" port="$2" running total
     [ -f "$dir/docker-compose.yml" ] || return 0
-    running=$( (cd "$dir" && docker compose ps --status running --format '{{.Name}}' 2>/dev/null) | wc -l)
-    total=$(   (cd "$dir" && docker compose ps --all     --format '{{.Name}}' 2>/dev/null) | wc -l)
+    running=$( (cd "$dir" && timeout 20 docker compose ps --status running --format '{{.Name}}' 2>/dev/null) | wc -l)
+    total=$(   (cd "$dir" && timeout 20 docker compose ps --all     --format '{{.Name}}' 2>/dev/null) | wc -l)
     [ "$total" -gt 0 ] && [ "$running" -eq "$total" ] || return 1
     [ "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 8 "http://${TS_IP}:${port}/" 2>/dev/null)" != "000" ]
 }
 # Full recreate, not just restart: Docker networking breaks in ways a
 # restart does not fix (see known-issues-and-decisions.md).
-compose_repair() { (cd "$1" && docker compose down && docker compose up -d); }
+compose_repair() { (cd "$1" && timeout 60 docker compose down && timeout 120 docker compose up -d); }
 
 # A stale mount passes mountpoint(1) but every read fails - test liveness.
 mount_probe()  { mountpoint -q "$MEDIA" && timeout 8 ls "$MEDIA" >/dev/null 2>&1; }
-mount_repair() { systemctl start media-hdd-recover.service; }
+mount_repair() { timeout 120 systemctl start media-hdd-recover.service; }
 
 # The firewall table was once found silently absent from the live kernel
 # ruleset while the service reported success. Verify the loaded state.
 fw_probe()  { nft list table inet jellyfin_restrict >/dev/null 2>&1; }
-fw_repair() { systemctl restart nftables.service; }
+fw_repair() { timeout 60 systemctl restart nftables.service; }
 
 ts_probe()  { tailscale status >/dev/null 2>&1; }
-ts_repair() { systemctl restart tailscaled.service; }
+ts_repair() { timeout 60 systemctl restart tailscaled.service; }
 
 disk_probe() {
     local pct
@@ -165,7 +165,7 @@ disk_repair() {
     # find, not a glob: globs are expanded by the calling shell, so they
     # silently no-op when that shell cannot read the directory.
     find /var/lib/systemd/coredump -mindepth 1 -delete 2>/dev/null
-    docker system prune -af --filter "until=168h" 2>/dev/null
+    timeout 120 docker system prune -af --filter "until=168h" 2>/dev/null
     find "__HOME__/.cache" -type f -atime +30 -delete 2>/dev/null
 }
 

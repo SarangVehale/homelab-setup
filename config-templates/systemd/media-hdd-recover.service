@@ -3,4 +3,7 @@ Description=Recover media HDD after (re)connect: fsck, mount, restart dependent 
 
 [Service]
 Type=oneshot
+# Type=oneshot defaults to TimeoutStartSec=infinity. Without an explicit
+# value a hung call here blocks boot indefinitely with no error.
+TimeoutStartSec=300
 ExecStart=/usr/local/bin/media-hdd-recover.sh

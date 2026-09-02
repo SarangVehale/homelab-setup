@@ -3,4 +3,7 @@ Description=Media server health check (disk, services, HDD mount, Tailscale)
 
 [Service]
 Type=oneshot
+# Type=oneshot defaults to TimeoutStartSec=infinity. Without an explicit
+# value a hung call here blocks boot indefinitely with no error.
+TimeoutStartSec=120
 ExecStart=/usr/local/bin/media-server-healthcheck.sh

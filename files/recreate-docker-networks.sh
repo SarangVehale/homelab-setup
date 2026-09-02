@@ -2,7 +2,7 @@
 # nftables (re)starting can wipe Docker's dynamically-inserted iptables rules
 # for already-existing bridge networks (embedded DNS, NAT) without Docker
 # noticing - restarting docker.service alone does NOT fix this, only fully
-# recreating each compose network does (docker compose down && up).
+# recreating each compose network does (timeout 60 docker compose down && up).
 # Runs automatically after every nftables (re)start.
 #
 # Robustness notes:
@@ -18,12 +18,12 @@ TAG="docker-network-fix"
 
 # Bounded wait for the Docker API itself, not just the systemd unit state.
 for i in $(seq 1 15); do
-    if docker info >/dev/null 2>&1; then
+    if timeout 10 docker info >/dev/null 2>&1; then
         break
     fi
     sleep 2
 done
-if ! docker info >/dev/null 2>&1; then
+if ! timeout 10 docker info >/dev/null 2>&1; then
     logger -t "$TAG" "docker not ready after 30s wait, skipping (nothing to fix if it's not running)"
     exit 0
 fi
@@ -36,8 +36,8 @@ for compose_file in /opt/*/docker-compose.yml; do
     name=$(basename "$dir")
 
     logger -t "$TAG" "recreating network for $name ($compose_file)"
-    ( cd "$dir" && docker compose down ) 2>&1 | logger -t "$TAG"
-    ( cd "$dir" && docker compose up -d ) 2>&1 | logger -t "$TAG"
+    ( cd "$dir" && timeout 60 docker compose down ) 2>&1 | logger -t "$TAG"
+    ( cd "$dir" && timeout 120 docker compose up -d ) 2>&1 | logger -t "$TAG"
 
     sleep 5
     NOT_RUNNING=$( (cd "$dir" && docker compose ps --status running --format '{{.Name}}') | wc -l)

@@ -1,0 +1,54 @@
+#!/bin/sh
+# Custom GRUB entries for recovering from a boot that hangs on a service.
+#
+# Arch ships GRUB_DISABLE_RECOVERY=true, so a stock install has exactly one
+# boot entry and no way in when a custom unit hangs. That turned a
+# self-inflicted boot hang into a genuinely painful recovery.
+#
+# rescue.target starts almost nothing (no timers, no custom oneshots, no
+# graphical target), so a unit that hangs normal boot cannot block it.
+# emergency.target goes further still - root filesystem mounted read-only
+# and a shell, nothing else - for when even rescue is blocked.
+
+set -e
+
+. /usr/share/grub/grub-mkconfig_lib
+
+CLASS="--class arch --class gnu-linux --class gnu --class os"
+
+# Reuse whatever the main entry resolved to, so these stay correct across
+# kernel updates.
+ROOT_UUID="$(grub_probe --target=fs_uuid /boot 2>/dev/null || true)"
+LINUX_ROOT_DEVICE="$(grub_probe --target=fs_uuid / 2>/dev/null || true)"
+
+cat <<ENTRY
+submenu 'Recovery options' \$menuentry_id_option 'recovery-submenu' {
+    menuentry 'Arch Linux — rescue shell (skips custom services)' ${CLASS} {
+        load_video
+        insmod gzio
+        insmod part_gpt
+        insmod ext2
+        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
+        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.unit=rescue.target
+        initrd /initramfs-linux.img
+    }
+    menuentry 'Arch Linux — emergency shell (minimal, read-only root)' ${CLASS} {
+        load_video
+        insmod gzio
+        insmod part_gpt
+        insmod ext2
+        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
+        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.unit=emergency.target
+        initrd /initramfs-linux.img
+    }
+    menuentry 'Arch Linux — no custom units (systemd.mask)' ${CLASS} {
+        load_video
+        insmod gzio
+        insmod part_gpt
+        insmod ext2
+        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
+        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.mask=media-server-healthcheck.timer systemd.mask=media-server-backup.timer systemd.mask=docker-network-fix.service systemd.mask=media-hdd-recover.service
+        initrd /initramfs-linux.img
+    }
+}
+ENTRY

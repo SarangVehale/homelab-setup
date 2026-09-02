@@ -1,0 +1,17 @@
+[Unit]
+Description=Recreate Docker compose networks after an nftables reload
+# Ordering is the whole point of this unit existing separately. The previous
+# implementation was an ExecStartPost= on nftables.service, which runs
+# Before=network-pre.target - i.e. before routing, DNS or docker exist. A
+# `docker compose up` there waits forever on a network that isn't up yet,
+# and because ExecStartPost blocks its parent reaching "started", it hung
+# boot indefinitely with no error message.
+After=nftables.service docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Type=oneshot defaults to TimeoutStartSec=infinity. Never rely on that.
+TimeoutStartSec=180
+ExecStart=/usr/local/bin/recreate-docker-networks.sh

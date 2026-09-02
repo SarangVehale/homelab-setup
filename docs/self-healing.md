@@ -105,6 +105,6 @@ Being honest about the boundaries — these are **not** self-healing:
 
 ---
 
-[← Monitoring & alerting](monitoring-and-alerting.md) · [Home](../index.md) · [Agent instructions →](../AGENTS.md)
+[← Monitoring & alerting](monitoring-and-alerting.md) · [Home](../index.md) · [Boot resilience →](boot-resilience.md)
 
 <!-- nav:end -->

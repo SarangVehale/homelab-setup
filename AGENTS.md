@@ -113,6 +113,33 @@ fine and weren't. Don't repeat that. Specifically:
   before escalating it to the human, and say plainly when a previous
   conclusion was wrong.
 
+## Never hang boot (the most expensive mistake made in this repo)
+
+Custom units from this repo once made the machine **unbootable** — three
+separate units each hanging boot indefinitely, on a stock Arch install with
+no recovery entry to fall back to. Read
+[`docs/boot-resilience.md`](docs/boot-resilience.md) before adding or
+editing any systemd unit. The rules:
+
+- **`Type=oneshot` defaults to `TimeoutStartSec=infinity`.** Not 90 s —
+  *infinity*. Every oneshot unit must set an explicit timeout. Verify with
+  `systemctl show <unit> -p TimeoutStartUSec --value`; `infinity` is a bug.
+- **Never call Docker, a network service, or a remote host from
+  `ExecStartPost=`** on an early-boot unit. `ExecStartPost` blocks its
+  parent from reaching "started", and `nftables.service` in particular runs
+  `Before=network-pre.target`, so anything needing the network waits
+  forever. Use a separate unit ordered `After=network-online.target` and
+  trigger it with `systemctl start --no-block`.
+- **Bound external commands inside scripts too**, not just at the unit
+  level: `timeout 60 docker compose down`.
+- **`nofail` in fstab is not a timeout.** It covers a mount that *fails*,
+  not one that is *slow* — add `x-systemd.device-timeout=`. And run
+  `findmnt --verify --fstab` after editing: a stray space inside the options
+  field silently breaks the line, and a successful boot does not prove it
+  parsed.
+- **Reboot to test after adding units.** These faults are invisible until
+  the machine restarts, which may be weeks later.
+
 ## Redaction discipline
 
 If any of this repo's contents are going to leave the local machine (pushed
@@ -153,6 +180,6 @@ longer exists.
 
 ---
 
-[← Self-healing](docs/self-healing.md) · [Home](index.md)
+[← Boot resilience](docs/boot-resilience.md) · [Home](index.md)
 
 <!-- nav:end -->

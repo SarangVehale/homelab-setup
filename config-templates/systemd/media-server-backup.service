@@ -4,4 +4,7 @@ After=media-hdd-recover.service
 
 [Service]
 Type=oneshot
+# Type=oneshot defaults to TimeoutStartSec=infinity. Without an explicit
+# value a hung call here blocks boot indefinitely with no error.
+TimeoutStartSec=1800
 ExecStart=/usr/local/bin/media-server-backup.sh

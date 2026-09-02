@@ -28,6 +28,7 @@ the operating manual, not a reference doc.
 - [Transcoding](docs/transcoding.md) — the remote-GPU batch re-encode pipeline, the bugs hit, and **why it's a workaround not to repeat on capable hardware**
 - [Monitoring & alerting](docs/monitoring-and-alerting.md) — health checks that don't trust `systemctl is-active`, and state-change-only email alerts
 - [Self-healing](docs/self-healing.md) — what repairs itself automatically, nightly state backups, and an honest list of what still needs a human
+- [Boot resilience](docs/boot-resilience.md) — **read before adding any systemd unit.** Custom units here once made the machine unbootable; covers why, and the recovery entries a stock Arch install lacks
 
 ## Setup scripts
 
@@ -50,6 +51,7 @@ anywhere in this repo.
 | [`10-dashboard.sh`](scripts/10-dashboard.sh) | Links dashboard + live system stats panel |
 | [`11-transcode-pipeline.sh`](scripts/11-transcode-pipeline.sh) | Batch HEVC→H.264 re-encode, offloaded to a remote GPU (overlaps transfer/transcode/pull-back) |
 | [`12-self-healing.sh`](scripts/12-self-healing.sh) | Auto-remediating health check, nightly state backups, journal cap, restart hardening |
+| [`13-boot-resilience.sh`](scripts/13-boot-resilience.sh) | GRUB recovery entries, fallback initramfs, unit timeouts, fstab validation |
 
 ## Config templates
 
