@@ -28,6 +28,13 @@ ROOT_UUID="$("${grub_probe}" --target=fs_uuid / 2>/dev/null || true)"
 KERNEL="/vmlinuz-linux"
 INITRD="/initramfs-linux.img"
 
+# Match the stock entries and load CPU microcode first, if present. Omitting
+# it does not stop the machine booting, but a troubleshooting entry should
+# differ from a normal boot only in what it masks.
+for uc in intel-ucode.img amd-ucode.img; do
+    [ -r "/boot/$uc" ] && INITRD="/$uc $INITRD"
+done
+
 # /boot may be the same filesystem as /, in which case kernel paths are
 # prefixed with /boot.
 if [ "$BOOT_UUID" = "$ROOT_UUID" ]; then
