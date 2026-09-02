@@ -86,7 +86,7 @@ install_unit() {
         -e "s|__HOME__|$HOME|g" "$src" > "$tmp"
     if grep -q '__[A-Z_]*__' "$tmp"; then
         echo "ERROR: unsubstituted placeholder left in $src:" >&2
-        grep -o '__[A-Z_]*__' "$tmp" | sort -u >&2
+        grep -o '__[A-Z_]*__' "$tmp" | sort -u >&2 || true
         rm -f "$tmp"; exit 1
     fi
     sudo install -m 644 -o root -g root "$tmp" "$dest"

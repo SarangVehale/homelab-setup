@@ -135,6 +135,32 @@ systemctl disable --now <culprit>
    the machine is restarted, which may be weeks later — long after the
    change that caused them.
 
+
+### `set -euo pipefail` + a diagnostic pipeline = script dies mid-repair
+
+The first run of `13-boot-resilience.sh` printed the fstab errors it found
+and then **silently stopped**, having fixed nothing:
+
+```bash
+findmnt --verify --fstab 2>&1 | grep -iE "parse|error" | sed 's/^/      /'
+```
+
+`findmnt --verify` exits non-zero **when it finds problems** — which is
+precisely when this line runs. `pipefail` propagates that through the pipe,
+and `set -e` terminates the script. The repair code immediately after it
+never executed.
+
+This is a general hazard with tools whose non-zero exit means "I found
+something" rather than "I failed": `findmnt --verify`, `grep` (1 = no
+match), `diff`, `cmp`. Under `set -euo pipefail`, guard them:
+
+```bash
+some_check | formatter || true
+```
+
+The tell is a script that stops right after printing a diagnostic, with no
+error of its own.
+
 <!-- nav:start -->
 
 ---

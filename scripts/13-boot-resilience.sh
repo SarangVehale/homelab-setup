@@ -17,7 +17,7 @@ echo "==> 1. Validating /etc/fstab"
 # successful boot does not.
 if ! findmnt --verify --fstab >/dev/null 2>&1; then
     echo "    fstab has parse errors:"
-    findmnt --verify --fstab 2>&1 | grep -iE "parse|error" | sed 's/^/      /'
+    findmnt --verify --fstab 2>&1 | grep -iE "parse|error" | sed 's/^/      /' || true
     echo "    Fixing spaces inside the options field..."
     sudo cp /etc/fstab "/etc/fstab.bak.$(date +%s)"
     # Collapse ", " to "," only within a line's option list.
@@ -26,7 +26,7 @@ if ! findmnt --verify --fstab >/dev/null 2>&1; then
         echo "    fstab now parses cleanly."
     else
         echo "    STILL BROKEN - fix by hand before rebooting:" >&2
-        findmnt --verify --fstab 2>&1 | sed 's/^/      /' >&2
+        findmnt --verify --fstab 2>&1 | sed 's/^/      /' >&2 || true
         exit 1
     fi
 else
@@ -119,12 +119,12 @@ fi
 
 sudo install -m 600 -o root -g root "$GRUB_TMP" /boot/grub/grub.cfg
 rm -f "$GRUB_TMP"
-echo "    installed, $(grep -c '^\s*menuentry' /boot/grub/grub.cfg) menu entries"
+echo "    installed, $(grep -c '^\s*menuentry' /boot/grub/grub.cfg || true) menu entries"
 
 echo
 echo "==> Verifying"
 echo "--- boot entries ---"
-grep -oE "menuentry '[^']*'" /boot/grub/grub.cfg | sed 's/^/    /'
+grep -oE "menuentry '[^']*'" /boot/grub/grub.cfg | sed 's/^/    /' || true
 echo "--- unit timeouts (none should be infinity) ---"
 for u in media-server-healthcheck media-server-backup media-hdd-recover \
          media-hdd-disconnect docker-network-fix; do
@@ -132,7 +132,7 @@ for u in media-server-healthcheck media-server-backup media-hdd-recover \
         "$(systemctl show "$u.service" -p TimeoutStartUSec --value 2>/dev/null)"
 done
 echo "--- nftables must not call docker inline ---"
-grep -H ExecStartPost /etc/systemd/system/nftables.service.d/*.conf 2>/dev/null | sed 's/^/    /'
+grep -H ExecStartPost /etc/systemd/system/nftables.service.d/*.conf 2>/dev/null | sed 's/^/    /' || true
 
 echo
 echo "Done. Re-enable the health check timer when ready:"
