@@ -11,26 +11,44 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "==> 1. Validating /etc/fstab"
-# A stray space inside the options field silently breaks the line: the
-# remaining options are parsed as the dump/pass columns, so things like
-# x-systemd.device-timeout are never applied. findmnt catches this; a
-# successful boot does not.
-if ! findmnt --verify --fstab >/dev/null 2>&1; then
-    echo "    fstab has parse errors:"
-    findmnt --verify --fstab 2>&1 | grep -iE "parse|error" | sed 's/^/      /' || true
-    echo "    Fixing spaces inside the options field..."
+# Only PARSE errors matter for boot safety of the file itself. findmnt
+# --verify also exits non-zero for:
+#   [E] unreachable on boot required source  - the device is simply absent,
+#       which is exactly what `nofail` exists to handle
+#   [W] your fstab has been modified...      - purely cosmetic
+# Treating either as failure aborted an earlier run of this script right
+# after it had successfully repaired the file.
+fstab_parse_errors() {
+    findmnt --verify --fstab 2>&1 | sed -n 's/^\([0-9]\+\) parse error.*/\1/p' | head -1
+}
+
+PARSE_ERRS="$(fstab_parse_errors)"
+PARSE_ERRS="${PARSE_ERRS:-0}"
+
+if [ "$PARSE_ERRS" -gt 0 ]; then
+    echo "    $PARSE_ERRS parse error(s) found:"
+    findmnt --verify --fstab 2>&1 | grep -E '^\s*\[E\]|parse error' | sed 's/^/      /' || true
+    echo "    Repairing spaces inside the options field..."
     sudo cp /etc/fstab "/etc/fstab.bak.$(date +%s)"
-    # Collapse ", " to "," only within a line's option list.
     sudo sed -i -E 's/(^[^#][^ \t]+[ \t]+[^ \t]+[ \t]+[^ \t]+[ \t]+[^ \t]*),[ \t]+/\1,/g' /etc/fstab
-    if findmnt --verify --fstab >/dev/null 2>&1; then
-        echo "    fstab now parses cleanly."
-    else
-        echo "    STILL BROKEN - fix by hand before rebooting:" >&2
+    sudo systemctl daemon-reload
+
+    PARSE_ERRS="$(fstab_parse_errors)"; PARSE_ERRS="${PARSE_ERRS:-0}"
+    if [ "$PARSE_ERRS" -gt 0 ]; then
+        echo "ERROR: fstab still has $PARSE_ERRS parse error(s). Fix by hand" >&2
+        echo "       before rebooting - a bad fstab can stop boot." >&2
         findmnt --verify --fstab 2>&1 | sed 's/^/      /' >&2 || true
         exit 1
     fi
+    echo "    fstab now parses cleanly."
 else
-    echo "    fstab parses cleanly."
+    echo "    fstab parses cleanly (0 parse errors)."
+fi
+
+# Report, but do not fail on, the non-structural findings.
+if findmnt --verify --fstab 2>&1 | grep -q 'unreachable on boot required source'; then
+    echo "    note: a source is unreachable (external drive unplugged)."
+    echo "          Harmless - the entry has nofail + x-systemd.device-timeout."
 fi
 
 echo "==> 2. Bounded timeouts on every custom unit"

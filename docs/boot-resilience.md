@@ -161,6 +161,32 @@ some_check | formatter || true
 The tell is a script that stops right after printing a diagnostic, with no
 error of its own.
 
+
+### `findmnt --verify` exits non-zero for warnings too
+
+Even after the parse error was fixed, this still returned exit 1:
+
+```
+0 parse errors, 1 error, 1 warning
+   [E] unreachable on boot required source: UUID=...
+   [W] your fstab has been modified, but systemd still uses the old version
+```
+
+Neither finding is a structural problem:
+
+- **unreachable source** — the external drive is simply unplugged, which is
+  exactly the case `nofail` exists to cover. `findmnt` reports it as `[E]`
+  regardless.
+- **modified fstab** — cosmetic; cleared by `systemctl daemon-reload`.
+
+So `if findmnt --verify ...` as a pass/fail gate is wrong: it aborted the
+repair script immediately *after* it had successfully fixed the file. Test
+the number that actually reflects file validity instead:
+
+```bash
+findmnt --verify --fstab 2>&1 | sed -n 's/^\([0-9]\+\) parse error.*/\1/p'
+```
+
 <!-- nav:start -->
 
 ---
