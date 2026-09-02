@@ -110,6 +110,12 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now media-server-healthcheck.timer media-server-backup.timer
 sudo systemctl restart jellyfin audiobookshelf calibre-web
 
+# Jellyfin takes ~11s to become responsive. Probing before that makes the
+# health check "repair" a service that was merely still starting, which
+# inflates the repair counter and sends a spurious self-heal mail.
+echo "    waiting for services to finish starting..."
+sleep 25
+
 echo
 echo "==> Verifying"
 systemctl is-active media-server-healthcheck.timer media-server-backup.timer

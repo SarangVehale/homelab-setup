@@ -80,6 +80,11 @@ Host: ${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo unknown)}"
         now="bad"
     fi
 
+    # "healed" means healthy-after-repair. Without collapsing it to "ok"
+    # here, the run after a self-heal sees healed -> ok as a state change and
+    # sends a redundant RECOVERED mail for something already reported.
+    [ "$prev" = "healed" ] && prev="ok"
+
     if [ "$prev" != "$now" ]; then
         if [ "$now" = "bad" ]; then
             send_mail "[media-server] PROBLEM: $name" \
