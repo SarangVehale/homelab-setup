@@ -18,11 +18,17 @@ echo "==> 1. Validating /etc/fstab"
 #   [W] your fstab has been modified...      - purely cosmetic
 # Treating either as failure aborted an earlier run of this script right
 # after it had successfully repaired the file.
+# NOTE: every layer here needs its own guard. findmnt exits non-zero, which
+# pipefail propagates, which `set -e` acts on - including for a plain
+# assignment like VAR=$(...). Three separate runs of this script died on
+# exactly that.
 fstab_parse_errors() {
-    findmnt --verify --fstab 2>&1 | sed -n 's/^\([0-9]\+\) parse error.*/\1/p' | head -1
+    local out=""
+    out="$(findmnt --verify --fstab 2>&1 || true)"
+    printf '%s\n' "$out" | sed -n 's/^\([0-9]\+\) parse error.*/\1/p' | head -1 || true
 }
 
-PARSE_ERRS="$(fstab_parse_errors)"
+PARSE_ERRS="$(fstab_parse_errors || true)"
 PARSE_ERRS="${PARSE_ERRS:-0}"
 
 if [ "$PARSE_ERRS" -gt 0 ]; then

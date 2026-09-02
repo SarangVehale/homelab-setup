@@ -187,6 +187,32 @@ the number that actually reflects file validity instead:
 findmnt --verify --fstab 2>&1 | sed -n 's/^\([0-9]\+\) parse error.*/\1/p'
 ```
 
+
+### `set -e` fires on assignments too — and `bash -n` will not tell you
+
+Three consecutive runs of the repair script aborted on error handling rather
+than on the work, each time a variant of the same thing:
+
+```bash
+VAR="$(some_check)"      # some_check exits 1 -> `set -e` kills the script
+check | formatter        # first command exits 1 -> pipefail -> `set -e`
+```
+
+A command substitution in a plain assignment counts. So does any pipeline
+under `pipefail`. And commands that report findings with a non-zero exit
+(`findmnt --verify`, `grep`, `diff`) hit this constantly — a diagnostic
+line, of all things, becomes the thing that stops the script.
+
+`bash -n` catches none of it: the syntax is valid. The only reliable check
+is running the control flow. `scripts/dry-run.sh` does that with `sudo`,
+`grub-mkconfig` and `mkinitcpio` stubbed:
+
+```bash
+./scripts/dry-run.sh scripts/13-boot-resilience.sh
+```
+
+Run it against any deploy script before running it for real.
+
 <!-- nav:start -->
 
 ---
