@@ -175,16 +175,27 @@ Observed link rate: **65 Mbit/s**, realistically ~25-30 Mbit/s of usable
 throughput, shared with all other traffic and competing with everything
 else on a congested 2.4 GHz band.
 
-**This is the binding constraint on streaming quality**, and it interacts
-badly with the transcoding decision — see
+**This was the binding constraint on streaming quality** until Ethernet was
+connected (see below), and it interacted badly with the transcoding
+decision — see
 [`transcoding.md`](transcoding.md): re-encoding HEVC to H.264 roughly
 tripled file bitrates, which is fine for CPU but significantly worse for a
 saturated 2.4 GHz link.
 
-**Fix on this hardware: use Ethernet.** The machine has an unused gigabit
-port (`enp0s25`). This eliminates the bandwidth ceiling, 2.4 GHz
-congestion, and the Wi-Fi rekey drop below, all at once — a cable is worth
-more here than any amount of software tuning.
+**Fix on this hardware: use Ethernet — done, and it resolved everything.**
+The gigabit port (`enp0s25`) now negotiates 1000 Mb/s full duplex and holds
+the default route, with Wi-Fi left as automatic fallback. That is roughly a
+35x increase in usable bandwidth and it retired, in one step: streaming
+stutter, ~97,000 Wi-Fi tx retries, and the hourly rekey drop.
+
+It also changes the transcoding trade-off. Tripling file bitrates to avoid
+CPU transcoding was actively counterproductive over 2.4 GHz; over gigabit
+it costs nothing — an 8 Mbps stream is under 1% of the link.
+
+Nothing needed switching by hand: `systemd-networkd` manages Ethernet only
+(Wi-Fi stays under `iwd`) with `RouteMetric=100` against Wi-Fi's 304, so
+the wired link wins whenever a cable is present and traffic falls back
+automatically when it is not.
 
 **On new hardware**: any modern dual-band card removes this entirely.
 
