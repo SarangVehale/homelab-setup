@@ -69,7 +69,30 @@ else
 fi
 
 echo "==> 5. Regenerating GRUB config"
-sudo grub-mkconfig -o /boot/grub/grub.cfg
+# A broken grub.cfg is itself an unbootable system - the exact failure mode
+# this script exists to prevent. Back up, generate to a temp file, sanity
+# check it, and only then install it.
+GRUB_BACKUP="/boot/grub/grub.cfg.bak.$(date +%s)"
+sudo cp /boot/grub/grub.cfg "$GRUB_BACKUP"
+echo "    backup: $GRUB_BACKUP"
+
+GRUB_TMP=$(mktemp)
+if ! sudo grub-mkconfig -o "$GRUB_TMP" 2>&1 | sed 's/^/    /'; then
+    echo "ERROR: grub-mkconfig failed. Existing grub.cfg left untouched." >&2
+    rm -f "$GRUB_TMP"; exit 1
+fi
+
+# Must contain at least the normal boot entry, or we are about to install a
+# menu with no way into the system.
+if ! grep -q "^menuentry 'Arch Linux'" "$GRUB_TMP"; then
+    echo "ERROR: generated grub.cfg has no primary Arch Linux entry." >&2
+    echo "       Refusing to install it. Existing config untouched." >&2
+    rm -f "$GRUB_TMP"; exit 1
+fi
+
+sudo install -m 600 -o root -g root "$GRUB_TMP" /boot/grub/grub.cfg
+rm -f "$GRUB_TMP"
+echo "    installed, $(grep -c '^\s*menuentry' /boot/grub/grub.cfg) menu entries"
 
 echo
 echo "==> Verifying"

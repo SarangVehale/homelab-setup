@@ -1,54 +1,65 @@
 #!/bin/sh
-# Custom GRUB entries for recovering from a boot that hangs on a service.
+# Adds a "boot with this repo's units masked" entry to the GRUB menu.
 #
-# Arch ships GRUB_DISABLE_RECOVERY=true, so a stock install has exactly one
-# boot entry and no way in when a custom unit hangs. That turned a
-# self-inflicted boot hang into a genuinely painful recovery.
+# Arch ships GRUB_DISABLE_RECOVERY=true. Setting it to false gets you GRUB's
+# own, always-correct recovery entry (single-user / rescue.target) - that is
+# handled in 13-boot-resilience.sh and is the primary safety net.
 #
-# rescue.target starts almost nothing (no timers, no custom oneshots, no
-# graphical target), so a unit that hangs normal boot cannot block it.
-# emergency.target goes further still - root filesystem mounted read-only
-# and a shell, nothing else - for when even rescue is blocked.
+# This script adds the one thing GRUB cannot generate itself: an otherwise
+# normal boot with only *this repo's* units masked. That is what isolates
+# "which of my units is hanging boot" without also losing networking, the
+# graphical session, or anything else a rescue shell drops.
+#
+# Fails safe: if the partition UUIDs cannot be determined, it emits nothing
+# rather than a broken menu entry.
 
 set -e
 
+# shellcheck disable=SC1091
 . /usr/share/grub/grub-mkconfig_lib
 
-CLASS="--class arch --class gnu-linux --class gnu --class os"
+BOOT_UUID="$(grub_probe --target=fs_uuid /boot 2>/dev/null || true)"
+ROOT_UUID="$(grub_probe --target=fs_uuid / 2>/dev/null || true)"
+KERNEL="/vmlinuz-linux"
+INITRD="/initramfs-linux.img"
 
-# Reuse whatever the main entry resolved to, so these stay correct across
-# kernel updates.
-ROOT_UUID="$(grub_probe --target=fs_uuid /boot 2>/dev/null || true)"
-LINUX_ROOT_DEVICE="$(grub_probe --target=fs_uuid / 2>/dev/null || true)"
+# /boot may be the same filesystem as /, in which case kernel paths are
+# prefixed with /boot.
+if [ "$BOOT_UUID" = "$ROOT_UUID" ]; then
+    KERNEL="/boot${KERNEL}"
+    INITRD="/boot${INITRD}"
+fi
+
+# Bail out silently rather than emit an entry that cannot boot.
+if [ -z "$BOOT_UUID" ] || [ -z "$ROOT_UUID" ]; then
+    echo "40_rescue: could not determine partition UUIDs, skipping" >&2
+    exit 0
+fi
+if [ ! -r "/boot/vmlinuz-linux" ]; then
+    echo "40_rescue: /boot/vmlinuz-linux not found, skipping" >&2
+    exit 0
+fi
+
+# Units this repo installs that run at boot and could hang it.
+MASK="systemd.mask=media-server-healthcheck.timer \
+systemd.mask=media-server-healthcheck.service \
+systemd.mask=media-server-backup.timer \
+systemd.mask=media-server-backup.service \
+systemd.mask=docker-network-fix.service \
+systemd.mask=media-hdd-recover.service \
+systemd.mask=media-hdd-disconnect.service"
 
 cat <<ENTRY
-submenu 'Recovery options' \$menuentry_id_option 'recovery-submenu' {
-    menuentry 'Arch Linux — rescue shell (skips custom services)' ${CLASS} {
-        load_video
-        insmod gzio
-        insmod part_gpt
-        insmod ext2
-        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
-        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.unit=rescue.target
-        initrd /initramfs-linux.img
-    }
-    menuentry 'Arch Linux — emergency shell (minimal, read-only root)' ${CLASS} {
-        load_video
-        insmod gzio
-        insmod part_gpt
-        insmod ext2
-        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
-        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.unit=emergency.target
-        initrd /initramfs-linux.img
-    }
-    menuentry 'Arch Linux — no custom units (systemd.mask)' ${CLASS} {
-        load_video
-        insmod gzio
-        insmod part_gpt
-        insmod ext2
-        search --no-floppy --fs-uuid --set=root ${ROOT_UUID}
-        linux /vmlinuz-linux root=UUID=${LINUX_ROOT_DEVICE} rw systemd.mask=media-server-healthcheck.timer systemd.mask=media-server-backup.timer systemd.mask=docker-network-fix.service systemd.mask=media-hdd-recover.service
-        initrd /initramfs-linux.img
-    }
+menuentry 'Arch Linux — without homelab units (troubleshooting)' --class arch --class gnu-linux --class gnu --class os \$menuentry_id_option 'homelab-masked' {
+	load_video
+	set gfxpayload=keep
+	insmod gzio
+	insmod part_gpt
+	insmod fat
+	insmod ext2
+	search --no-floppy --fs-uuid --set=root ${BOOT_UUID}
+	echo 'Booting with homelab units masked...'
+	linux ${KERNEL} root=UUID=${ROOT_UUID} rw ${MASK}
+	initrd ${INITRD}
 }
 ENTRY
