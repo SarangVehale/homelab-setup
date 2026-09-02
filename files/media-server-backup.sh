@@ -76,11 +76,27 @@ if [ -d "__HOME__/.local/share/qBittorrent" ]; then
 fi
 
 # --- System config that isn't in git ---
+# Unit files can contain credentials - a Tailscale auth key was found sitting
+# in plaintext in tailscale-autoconnect.service, and this archive was quietly
+# carrying it. Warn rather than silently include secrets in a backup that
+# travels with the drive.
+if grep -rlsE 'authkey|auth-key|password=|token=|api[_-]?key=' \
+        /etc/systemd/system/ 2>/dev/null | grep -q .; then
+    log "WARNING: credential-looking strings in /etc/systemd/system - these"
+    log "         are being archived into system-config.tar.gz:"
+    grep -rlsE 'authkey|auth-key|password=|token=|api[_-]?key=' \
+        /etc/systemd/system/ 2>/dev/null | while read -r f; do
+        log "         $f"
+    done
+fi
+
 tar czf "$OUT/system-config.tar.gz" \
     /etc/fstab /etc/nftables.conf /etc/systemd/system/*.service \
     /etc/systemd/system/*.service.d /etc/udev/rules.d/99-media-hdd.rules \
     /etc/modprobe.d/usb-storage-quirks.conf /etc/tlp.d/50-media-hdd.conf \
     /etc/systemd/network/ 2>/dev/null
+# The archive can contain secrets by nature; keep it owner-only.
+chmod 600 "$OUT/system-config.tar.gz" 2>/dev/null
 
 # --- Rotate ---
 find "$DEST" -maxdepth 1 -type d -name '20*' -mtime "+$KEEP_DAYS" -exec rm -rf {} + 2>/dev/null
