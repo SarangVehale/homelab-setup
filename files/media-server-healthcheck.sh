@@ -137,6 +137,26 @@ disk_probe() {
     pct=$(df --output=pcent "$1" 2>/dev/null | tail -1 | tr -dc '0-9')
     [ -n "$pct" ] && [ "$pct" -lt "$DISK_WARN_PCT" ]
 }
+
+# df on an unmounted mountpoint silently reports the filesystem UNDERNEATH
+# it. Checking the media disk that way returned "ok" while actually
+# measuring /home - a healthy-looking result about the wrong disk. Only
+# report on it when it is genuinely mounted.
+media_disk_probe() {
+    mountpoint -q "$MEDIA" || return 0   # absent, not unhealthy - mount check covers that
+    disk_probe "$MEDIA"
+}
+
+# Services whose storage lives on the removable disk must not be "repaired"
+# while it is absent: the bind mount would resolve to the empty directory
+# under the mountpoint, so writes would silently land on the root
+# filesystem instead of the HDD.
+media_dependent_probe() {
+    if ! mountpoint -q "$MEDIA"; then
+        return 0    # storage absent - not this check's problem to fix
+    fi
+    compose_probe "$@"
+}
 # Reclaim the safely-reclaimable things before crying about disk space.
 # Ordered cheapest/safest first. Everything here is regenerable by
 # definition - no service state or media is touched.
@@ -173,13 +193,14 @@ disk_repair() {
 
 check "disk-root"  "disk_probe /"      disk_repair "Root filesystem at $(df --output=pcent / | tail -1 | tr -d ' ')"
 check "disk-home"  "disk_probe __HOME__" disk_repair "/home at $(df --output=pcent __HOME__ | tail -1 | tr -d ' ')"
-check "disk-media" "disk_probe $MEDIA" -  "Media disk at $(df --output=pcent "$MEDIA" 2>/dev/null | tail -1 | tr -d ' ')"
+check "disk-media" media_disk_probe -  "Media disk (only checked when mounted)"
 
 check "jellyfin"       "svc_probe jellyfin.service 8096"       "svc_repair jellyfin.service"       "Jellyfin (:8096)"
 check "audiobookshelf" "svc_probe audiobookshelf.service 3333" "svc_repair audiobookshelf.service" "Audiobookshelf (:3333)"
 check "calibre-web"    "svc_probe calibre-web.service 8083"    "svc_repair calibre-web.service"    "Calibre-Web (:8083)"
 
-check "immich" "compose_probe /opt/immich 2283" "compose_repair /opt/immich" "Immich stack (:2283)"
+# Immich's UPLOAD_LOCATION is on the media HDD, so it is media-dependent.
+check "immich" "media_dependent_probe /opt/immich 2283" "compose_repair /opt/immich" "Immich stack (:2283)"
 
 check "media-hdd"  mount_probe mount_repair "Media HDD at $MEDIA"
 check "firewall"   fw_probe    fw_repair    "nftables jellyfin_restrict table (Tailscale-only enforcement)"

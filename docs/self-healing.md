@@ -101,6 +101,30 @@ Being honest about the boundaries — these are **not** self-healing:
 - **Disk genuinely full of media.** Cleanup reclaims caches and logs, not
   the library. That decision stays human.
 
+
+## Removable storage changes what "healthy" means
+
+Two checks originally gave confidently wrong answers when the external HDD
+was unplugged.
+
+**`df` on an unmounted mountpoint reports the filesystem underneath it.**
+Checking free space on `~/Media` while the drive was absent returned the
+usage of `/home` — a healthy-looking number about an entirely different
+disk. The media disk is now only assessed when it is genuinely mounted;
+whether it is present at all is the mount check's job.
+
+**Services whose data lives on the HDD must not be restarted while it is
+absent.** Immich's `UPLOAD_LOCATION` is on the media disk. If it starts
+unmounted, the container's bind mount resolves to the empty directory
+*underneath* the mountpoint — so uploads land on the root filesystem
+instead, silently, and the library appears empty. Restarting is not a
+repair here; it makes things worse. Media-dependent services are skipped
+while their storage is missing.
+
+The general rule: a probe must distinguish **broken** from **not currently
+applicable**. Treating absence as failure produces both false alarms and
+harmful "repairs".
+
 <!-- nav:start -->
 
 ---
